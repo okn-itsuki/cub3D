@@ -1,5 +1,9 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef CUB_CONFIG_H
+#define CUB_CONFIG_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
 
 // rgbで床色と天井色を表現するための構造体
 // - r,g,b: 赤、緑、青.
@@ -13,12 +17,21 @@ typedef struct s_rgb
 	int	r;
 	int	g;
 	int	b;
-	int	value;
+	uint32_t	value;
 	bool is_set;
 }	t_rgb;
 
+// 方角
+typedef enum e_dir
+{
+	EAST = 0,
+	WEST,
+	NORTH,
+	SOUTH
+}t_dir;
 
-// 4方向の壁テクスチャのパス名を保持する構造体
+
+// 四方向の壁のファイルパス名を保持する構造体
 typedef struct s_tex_path
 {
 	char	*no;
@@ -27,12 +40,11 @@ typedef struct s_tex_path
 	char	*ea;
 }	t_tex_path;
 
-
 // プレイヤーの初期位置,向きを保持する構造体
 // - row: map上の行番号
 // - col: map上の列番号
 // - dir: プレイヤーの初期向き
-//  + 'N','S','E','W'のいずれかで設定する
+//  + 'EAST','WEST','NORTH','SOUTH'の列挙値で設定する
 // - count: map中にspawnがいくつ見つかったか
 //  + .cubの開始地点は一つでなければいけないので、
 //  + 'count == 0': 開始地点がない
@@ -42,7 +54,7 @@ typedef struct s_spawn
 {
 	int		row;
 	int		col;
-	char	dir;
+	t_dir	dir;
 	int		count;
 }	t_spawn;
 
