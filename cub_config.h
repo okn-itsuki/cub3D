@@ -45,17 +45,11 @@ typedef struct s_tex_path
 // - col: map上の列番号
 // - dir: プレイヤーの初期向き
 //  + 'EAST','WEST','NORTH','SOUTH'の列挙値で設定する
-// - count: map中にspawnがいくつ見つかったか
-//  + .cubの開始地点は一つでなければいけないので、
-//  + 'count == 0': 開始地点がない
-//  + 'count == 1': 正常なケース
-//  + 'count > 1 ': 複数開始地点があって不正 
 typedef struct s_spawn
 {
 	int		row;
 	int		col;
 	t_dir	dir;
-	int		count;
 }	t_spawn;
 
 
