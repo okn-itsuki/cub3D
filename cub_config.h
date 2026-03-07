@@ -68,15 +68,15 @@ typedef struct s_map
 
 // '.cub'のパース処理を行い、処理結果を出力する構造体
 // - tex: 四方向のテクスチャパス
-// - floor: 床色
-// - ceiling: 天井色
+// - floor_color: 床色
+// - ceiling_color: 天井色
 // - map: map本体
 // - spawn: プレイヤーの初期位置と向き
 typedef struct s_config
 {
 	t_tex_path	tex;
-	t_rgb		floor;
-	t_rgb		ceiling;
+	t_rgb		floor_color;
+	t_rgb		ceiling_color;
 	t_map		map;
 	t_spawn		spawn;
 }	t_config;
