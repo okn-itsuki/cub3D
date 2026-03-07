@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "config.h"
 
 int	valid_extension(char *filename)
 {
@@ -21,5 +22,7 @@ int main(int argc, char *argv[])
 	}
 
 	printf("map file: %s\n", argv[1]);
+
+
 	return 0;
 }
