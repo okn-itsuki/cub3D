@@ -31,13 +31,25 @@ typedef enum e_dir
 }t_dir;
 
 
-// 四方向の壁のファイルパス名を保持する構造体
+// 四方向の壁テクスチャを配列 index で一元管理するための列挙体
+// - TEX_NO,TEX_SO,TEX_WE,TEX_EA: 北,南,西,東の壁に対応する
+// - TEX_COUNT: 配列長
+//  + 壁テクスチャ配列は必ず '0 <= index < TEX_COUNT' を満たす
+typedef enum e_tex_id
+{
+	TEX_NO = 0,
+	TEX_SO,
+	TEX_WE,
+	TEX_EA,
+	TEX_COUNT
+}	t_tex_id;
+
+// 四方向の壁テクスチャのファイルパス名を保持する構造体
+// - path: 壁テクスチャのファイルパス
+//  + path[TEX_NO] = NO, path[TEX_SO] = SO, path[TEX_WE] = WE, path[TEX_EA] = EA
 typedef struct s_tex_path
 {
-	char	*no;
-	char	*so;
-	char	*we;
-	char	*ea;
+	char		*path[TEX_COUNT];
 }	t_tex_path;
 
 // プレイヤーの初期位置,向きを保持する構造体
