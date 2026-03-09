@@ -208,23 +208,46 @@ typedef struct s_render
 }	t_render;
 
 
-// cub3d全体の実行状態を保持する構造体
-// - config: '.cub'のパースの結果
-// - mlx: mlx本体とwindow
+
+
+// フレーム時間を管理する構造体
+// - frame_index: 開始からのフレーム数
+// - last_tick_us: 直前フレームの時刻[usec]
+// - delta_sec: 直前フレームからの経過時間[sec]
+//  + delta_sec = (now_us - last_tick_us) / 1000000.0
+//  + 異常に大きい値は実装側で clamp して移動量の暴走を防ぐ
+typedef struct s_frame_clock
+{
+	uint64_t	frame_index;
+	uint64_t	last_tick_us;
+	double		delta_sec;
+}	t_frame_clock;
+
+// cub3d全体の実行状態を保持するルート構造体
+// - config: '.cub' のパース結果
+// - mlx: MLX本体とwindow
+// - assets: 壁テクスチャ画像のアセット
+// - render: frame画像とraycast
 // - player: プレイヤーの実行時状態
-// - frame: フレーム画像
-// - tex_*: 四方向の壁テクスチャ画像
-//  + 現段階では各方向を個別に保持したいと思います.
+// - input: 入力状態
+// - clock: フレーム時間
+// - init_mask: 部分初期化済みの資源を示すbit集合(変更するかも)
+// - running: loop継続中かどうか
+// - フロー:
+//  + config -> mlx -> win -> frame -> assets.wall[] -> player/input/clock -> running
+// - 解放する順序:
+//  + assets.wall[] -> render.frame -> mlx.win -> mlx.mlx -> config
 typedef struct s_game
 {
-	t_config	config;
-	t_mlx		mlx;
-	t_player	player;
-	t_img		frame;
-	t_img		tex_no;
-	t_img		tex_so;
-	t_img		tex_we;
-	t_img		tex_ea;
+	t_config		config;
+	t_mlx			mlx;
+	t_assets		assets;
+	t_render		render;
+	t_player		player;
+	t_input			input;
+	t_frame_clock	clock;
+	uint32_t		init_mask;
+	bool			running;
 }	t_game;
 
 #endif
