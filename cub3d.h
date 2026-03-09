@@ -50,6 +50,16 @@ typedef struct s_vec2d
 
 
 
+// 整数の2次元ベクトルを表す構造体
+// - x,y: map cell, step, index など離散量の各成分
+// - ot_ray が値として所有する
+typedef struct s_ivec2
+{
+	int			x;
+	int			y;
+}	t_ivec2;
+
+
 // 入力状態をフレーム間で保持する構造体
 // - move_forward,move_backward: 前進,後退の押下状態
 // - strafe_left,strafe_right: 平行移動の押下状態
@@ -113,6 +123,89 @@ typedef struct s_assets
 {
 	t_texture	wall[TEX_COUNT];
 }	t_assets;
+
+
+
+
+// DDAでどちらの軸の壁に衝突したかを表す列挙体
+// - HIT_X: x方向の境界で衝突
+// - HIT_Y: y方向の境界で衝突
+typedef enum e_hit_side
+{
+	HIT_X = 0,
+	HIT_Y
+}	t_hit_side;
+
+
+// 1列分のraycastの計算で使う一時状態を保持する構造体
+// - column: いま描画している画面列
+//  + 0 <= column < WIN_W
+// - camera_x: カメラ平面上の正規化座標
+//  + camera_x = 2 * column / (WIN_W - 1) - 1
+// - ray_dir: その列に飛ばすray方向
+//  + ray_dir = dir + plane * camera_x
+// - map: DDAが現在参照しているmap cell
+// - side_dist: 次のgrid境界までの距離
+// - delta_dist: x/y方向へ1cell進むのに必要な距離
+//  + delta_dist.x = |1 / ray_dir.x|
+//  + delta_dist.y = |1 / ray_dir.y|
+//  + ray_dir成分が0のときは0除算を避けて INFINITY 相当で扱う
+// - step: DDAで各軸に進む符号
+//  + step.x, step.y は -1 または +1
+// - hit_side: どちらの軸の壁に当たったか
+// - perp_wall_dist: 魚眼補正後の壁までの垂直距離
+// - wall_x: 壁面上の衝突位置の小数部
+//  + 0.0 <= wall_x < 1.0 を保つ
+typedef struct s_ray
+{
+	int			column;
+	double		camera_x;
+	t_vec2d		ray_dir;
+	t_ivec2		map;
+	t_vec2d		side_dist;
+	t_vec2d		delta_dist;
+	t_ivec2		step;
+	t_hit_side	hit_side;
+	double		perp_wall_dist;
+	double		wall_x;
+}	t_ray;
+
+
+// 壁1列の描画結果を保持する構造体
+// - draw_start: 壁の描画開始y座標
+// - draw_end: 壁の描画終了y座標
+//  + 0 <= draw_start <= draw_end < WIN_H に clamp する
+// - tex_id: 使用する壁テクスチャID
+// - tex_x: テクスチャのx座標
+//  + 0 <= tex_x < texture.width
+// - tex_step: 画面yを1進めたときに進むテクスチャy量
+// - tex_pos: 現在のテクスチャyの実数位置
+//  + perp_wall_dist = (hit_side == HIT_X)
+//  +     ? side_dist.x - delta_dist.x
+//  +     : side_dist.y - delta_dist.y
+//  + line_height = WIN_H / perp_wall_dist
+// - t_render が毎列の描画結果として保持するstate
+typedef struct s_column
+{
+	int			draw_start;
+	int			draw_end;
+	t_tex_id	tex_id;
+	int			tex_x;
+	double		tex_step;
+	double		tex_pos;
+}	t_column;
+
+
+// 描画フレームとraycastをまとめる構造体
+// - frame: 画面全体を書き込むオフスクリーン画像
+// - ray: 1列分のDDA計算用 
+// - column: 1列分の描画結果 
+typedef struct s_render
+{
+	t_img		frame;
+	t_ray		ray;
+	t_column	column;
+}	t_render;
 
 
 // cub3d全体の実行状態を保持する構造体
