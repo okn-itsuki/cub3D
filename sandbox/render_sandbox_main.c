@@ -8,8 +8,8 @@
 
 
 /*
-parser を通さずに描画と raycast を実装するための簡易エントリポイント.
-maps/good/library.cub 相当の t_config を手動で組み立てる.
+parserを通さずに描画とraycastを実装するための簡易エントリポイント.
+maps/good/library.cub 相当のt_configを手動で組み立てる.
 
 F 139,99,58
 C 171,154,137
