@@ -1,0 +1,11 @@
+NO texture/direction/north.xpm
+SO texture/direction/south.xpm
+WE texture/direction/west.xpm
+EA texture/direction/east.xpm
+
+F 20,20,20
+C 200,200,200
+
+111111111111111111111
+1W0000000000000000001
+111111111111111111111
