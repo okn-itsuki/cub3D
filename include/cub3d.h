@@ -3,7 +3,6 @@
 
 #include "cub_config.h"
 #include "mlx.h"
-#include "libft.h"
 
 #define WIN_W 1280
 #define WIN_H 960
