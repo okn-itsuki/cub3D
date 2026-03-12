@@ -1,5 +1,6 @@
 #include "game_mlx_init.h"
-
+#include "libft.h"
+#include <stdlib.h>
 
 // 何する関数か:
 // - `init_mask` を見て、初期化済みの MLX 資源を逆順で一括開放する。
