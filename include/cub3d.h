@@ -6,16 +6,18 @@
 #define WIN_W 1280
 #define WIN_H 960
 
-// mlxの画像一枚を表す構造体
-// - img: mlx_new_image() または mlx_xpm_file_to_image() が返す画像オブジェクト
-// - addr: mlx_get_data_addr() が返す画像データの先頭アドレス
-// - bpp: mlx_get_data_addr() が1ピクセルあたりのbit数を書き込む
-// - line_len: mlx_get_data_addr() が画像に対しての1行分のbyte数を書き込む
-// - endian: mlx_get_data_addr() がエンディアン情報を書き込む
-//  + endian = 0: little endian
-//  + endian = 1: big endian
-// - width,height: この画像の横幅,縦幅(pixel数)
-//  + mlx_new_image() に渡した値、または mlx_xpm_file_to_image() が返した値を保持する
+// MLXの画像1枚を表す構造体
+// 役割:
+// - 画像オブジェクト本体と、pixel書き込みに必要な情報をまとめて持つ。
+// 主な値:
+// - img: `mlx_new_image()` または `mlx_xpm_file_to_image()` が返す画像オブジェクト
+// - addr: `mlx_get_data_addr()` が返す画像データの先頭アドレス
+// - bpp: `mlx_get_data_addr()` が書き込む 1pixel あたりの bit 数
+// - line_len: `mlx_get_data_addr()` が書き込む 1行あたりの byte 数
+// - endian: `mlx_get_data_addr()` が書き込むエンディアン情報
+//   + 0: little endian
+//   + 1: big endian
+// - width,height: この画像の横幅と縦幅
 typedef struct s_img
 {
 	void	*img;
@@ -27,9 +29,12 @@ typedef struct s_img
 	int		height;
 }	t_img;
 
-// mlx本体とwindowを表す構造体
-// - mlx: mlx_init() が返すmlxインスタンス
-// - win: mlx_new_window() が返すwindow
+// MLX本体と描画先windowを表す構造体
+// 役割:
+// - `mlx_init()` と `mlx_new_window()` の返り値をまとめて持つ。
+// 主な値:
+// - mlx: MLX本体のインスタンス
+// - win: 画面表示用のwindow
 typedef struct s_mlx
 {
 	void	*mlx;
@@ -39,8 +44,11 @@ typedef struct s_mlx
 
 
 // 実数の2次元ベクトルを表す構造体
-// - x,y: 二次元ベクトルの各座標
-// - プレイヤーの位置, 向き, 視野平面を表すために使う
+// 役割:
+// - 座標や方向ベクトルの実数値を表す。
+// 主な値:
+// - x: x成分
+// - y: y成分
 typedef struct s_vec2d
 {
 	double		x;
@@ -51,8 +59,11 @@ typedef struct s_vec2d
 
 
 // 整数の2次元ベクトルを表す構造体
-// - x,y: map cell, step, index など離散量の各成分
-// - ot_ray が値として所有する
+// 役割:
+// - map cell や step などの離散量を表す。
+// 主な値:
+// - x: x成分
+// - y: y成分
 typedef struct s_ivec2
 {
 	int			x;
@@ -61,10 +72,13 @@ typedef struct s_ivec2
 
 
 // 入力状態をフレーム間で保持する構造体
+// 役割:
+// - 各操作キーの押下状態をフレーム間で保持する。
+// 主な値:
 // - move_forward,move_backward: 前進,後退の押下状態
 // - strafe_left,strafe_right: 平行移動の押下状態
 // - turn_left,turn_right: 回転の押下状態
-// - quit: trueになったら終了
+// - quit: `true` になったら終了する
 typedef struct s_input
 {
 	bool		move_forward;
@@ -78,19 +92,18 @@ typedef struct s_input
 
 
 // プレイヤーの実行時状態をフレームごとに更新する構造体
+// 役割:
+// - プレイヤーの位置、向き、移動速度を実行時に保持する。
+// 主な値:
 // - pos: ワールド座標系の現在位置
-//  + 今どこにいるか
-//  + 初期値は 'spawn.col + 0.5', 'spawn.row + 0.5'
+//   + 初期値は `spawn.col + 0.5`, `spawn.row + 0.5`
 // - dir: 正規化済みの前方ベクトル
-//  + どっちを向いているか
-//  + ||dir|| = 1
+//   + `||dir|| = 1`
 // - plane: 画面平面ベクトル
-//  + 画面としてどの範囲を見ているか
-//  + dir ・ plane = 0
-//  + ||plane|| = tan(FOV / 2)
-//  + 既定 FOV = 66° とすると ||plane|| = tan(33°) ≈ 0.6494075932
+//   + `dir` と直交する
+//   + `||plane|| = tan(FOV / 2)`
 // - move_speed: 1秒あたりの移動量
-// - rot_speed: 1秒あたりの回転角(rad)
+// - rot_speed: 1秒あたりの回転角[rad]
 typedef struct s_player
 {
 	t_vec2d		pos;
@@ -104,9 +117,12 @@ typedef struct s_player
 
 
 // 壁テクスチャ1枚の実画像を保持する構造体
+// 役割:
+// - 壁テクスチャ1枚分の実画像とロード状態を保持する。
+// 主な値:
 // - image: MLX上にロード済みの画像
 // - loaded: 正常にロード済みかどうか
-//  + 部分初期化失敗時は 'loaded == true' のものだけ破棄する
+//   + 部分初期化失敗時は `loaded == true` のものだけ破棄する
 typedef struct s_texture
 {
 	t_img		image;
@@ -115,10 +131,13 @@ typedef struct s_texture
 
 
 
-// 描画のアセットをまとめる構造体
+// 描画用アセットをまとめる構造体
+// 役割:
+// - 実際に MLX 上へ読み込んだ画像資源を保持する。
+// 主な値:
 // - wall: 四方向の壁テクスチャ
-//  + '0 <= index < TEX_COUNT' を満たす index だけを使う
-//  + path の source of truth は t_config.tex、実画像の source of truth は t_assets.wall
+//  + `0 <= index < TEX_COUNT` の index だけを使う
+//  + パスは `t_config.tex`、実画像は `t_assets.wall` が管理元になる
 typedef struct s_assets
 {
 	t_texture	wall[TEX_COUNT];
@@ -138,24 +157,26 @@ typedef enum e_hit_side
 
 
 // 1列分のraycastの計算で使う一時状態を保持する構造体
+// 役割:
+// - 画面1列ぶんの raycast 計算で使う一時状態を保持する。
+// 主な値:
 // - column: いま描画している画面列
-//  + 0 <= column < WIN_W
+//   + `0 <= column < WIN_W`
 // - camera_x: カメラ平面上の正規化座標
-//  + camera_x = 2 * column / (WIN_W - 1) - 1
-// - ray_dir: その列に飛ばすray方向
-//  + ray_dir = dir + plane * camera_x
-// - map: DDAが現在参照しているmap cell
-// - side_dist: 次のgrid境界までの距離
+//   + `camera_x = 2 * column / (WIN_W - 1) - 1`
+// - ray_dir: その列に飛ばす ray 方向
+//   + `ray_dir = dir + plane * camera_x`
+// - map: DDA が現在参照している map cell
+// - side_dist: 次の grid 境界までの距離
 // - delta_dist: x/y方向へ1cell進むのに必要な距離
-//  + delta_dist.x = |1 / ray_dir.x|
-//  + delta_dist.y = |1 / ray_dir.y|
-//  + ray_dir成分が0のときは0除算を避けて INFINITY 相当で扱う
-// - step: DDAで各軸に進む符号
-//  + step.x, step.y は -1 または +1
+//   + `delta_dist.x = |1 / ray_dir.x|`
+//   + `delta_dist.y = |1 / ray_dir.y|`
+// - step: DDA で各軸に進む符号
+//   + `step.x`, `step.y` は `-1` または `+1`
 // - hit_side: どちらの軸の壁に当たったか
 // - perp_wall_dist: 魚眼補正後の壁までの垂直距離
 // - wall_x: 壁面上の衝突位置の小数部
-//  + 0.0 <= wall_x < 1.0 を保つ
+//   + `0.0 <= wall_x < 1.0` を保つ
 typedef struct s_ray
 {
 	int			column;
@@ -172,19 +193,17 @@ typedef struct s_ray
 
 
 // 壁1列の描画結果を保持する構造体
+// 役割:
+// - 壁1列ぶんの描画結果を保持する。
+// 主な値:
 // - draw_start: 壁の描画開始y座標
 // - draw_end: 壁の描画終了y座標
-//  + 0 <= draw_start <= draw_end < WIN_H に clamp する
+//   + `0 <= draw_start <= draw_end < WIN_H` に clamp する
 // - tex_id: 使用する壁テクスチャID
 // - tex_x: テクスチャのx座標
-//  + 0 <= tex_x < texture.width
+//   + `0 <= tex_x < texture.width`
 // - tex_step: 画面yを1進めたときに進むテクスチャy量
 // - tex_pos: 現在のテクスチャyの実数位置
-//  + perp_wall_dist = (hit_side == HIT_X)
-//  +     ? side_dist.x - delta_dist.x
-//  +     : side_dist.y - delta_dist.y
-//  + line_height = WIN_H / perp_wall_dist
-// - t_render が毎列の描画結果として保持するstate
 typedef struct s_column
 {
 	int			draw_start;
@@ -196,10 +215,13 @@ typedef struct s_column
 }	t_column;
 
 
-// 描画フレームとraycastをまとめる構造体
-// - frame: 画面全体を書き込むオフスクリーン画像
-// - ray: 1列分のDDA計算用 
-// - column: 1列分の描画結果 
+// 描画フレームと raycast 用の作業領域をまとめる構造体
+// 役割:
+// - 1フレーム描画に必要な画像と一時状態を保持する。
+// 主な値:
+// - frame: 画面全体を書き込む off-screen 画像
+// - ray: 1列分の DDA 計算用
+// - column: 1列分の描画結果
 typedef struct s_render
 {
 	t_img		frame;
@@ -211,11 +233,13 @@ typedef struct s_render
 
 
 // フレーム時間を管理する構造体
+// 役割:
+// - 前フレームからの経過時間を持ち、移動量や更新量の計算に使う。
+// 主な値:
 // - frame_index: 開始からのフレーム数
 // - last_tick_us: 直前フレームの時刻[usec]
 // - delta_sec: 直前フレームからの経過時間[sec]
-//  + delta_sec = (now_us - last_tick_us) / 1000000.0
-//  + 異常に大きい値は実装側で clamp して移動量の暴走を防ぐ
+//   + `delta_sec = (now_us - last_tick_us) / 1000000.0`
 typedef struct s_frame_clock
 {
 	uint64_t	frame_index;
@@ -223,20 +247,23 @@ typedef struct s_frame_clock
 	double		delta_sec;
 }	t_frame_clock;
 
-// cub3d全体の実行状態を保持するルート構造体
-// - config: '.cub' のパース結果
+// cub3d全体の実行状態をまとめるルート構造体
+// 役割:
+// - パース結果、MLX資源、描画状態、入力状態をひとまとめに持つ。
+// 主な値:
+// - config: `.cub` のパース結果
 // - mlx: MLX本体とwindow
 // - assets: 壁テクスチャ画像のアセット
-// - render: frame画像とraycast
+// - render: frame画像とraycast用の作業領域
 // - player: プレイヤーの実行時状態
 // - input: 入力状態
 // - clock: フレーム時間
-// - init_mask: 部分初期化済みの資源を示すbit集合(変更するかも)
-// - running: loop継続中かどうか
-// - フロー:
-//  + config -> mlx -> win -> frame -> assets.wall[] -> player/input/clock -> running
-// - 解放する順序:
-//  + assets.wall[] -> render.frame -> mlx.win -> mlx.mlx -> config
+// - init_mask: 部分初期化済みの資源を表す bit 集合
+// - running: loop を継続するかどうか
+// 初期化順:
+// - config -> mlx -> win -> frame -> assets.wall[] -> player/input/clock -> running
+// 解放順:
+// - assets.wall[] -> render.frame -> mlx.win -> mlx.mlx -> config
 typedef struct s_game
 {
 	t_config		config;
