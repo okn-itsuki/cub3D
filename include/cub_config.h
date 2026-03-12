@@ -5,13 +5,16 @@
 #include <stdint.h>
 
 
-// rgbで床色と天井色を表現するための構造体
-// - r,g,b: 赤、緑、青.
-//  + 0~255の範囲
-// - value: 描画用にまとめた24bitの色値
-//  + 'value = (r << 16) | (g << 8) | b;'等で8bitずつ詰めて1つの整数値にする
-// - is_set: 実際に入力済みかどうかを表すbool
-//  + 黒が有効値なので、'F 0,0,0'のような値は通すので、それに従い設定済みか判定する
+// RGBで床色と天井色を表現する構造体
+// 役割:
+// - 色の各成分と、描画用にまとめた色値を保持する。
+// 主な値:
+// - r,g,b: 赤、緑、青
+//   + `0` から `255` の範囲
+// - value: 描画用にまとめた 24bit の色値
+//   + `value = (r << 16) | (g << 8) | b`
+// - is_set: 実際に入力済みかどうか
+//   + `F 0,0,0` のような黒も有効値なので、別で管理する
 typedef struct s_rgb
 {
 	int	r;
@@ -21,7 +24,11 @@ typedef struct s_rgb
 	bool is_set;
 }	t_rgb;
 
-// 方角
+// 方角を表す列挙体
+// 役割:
+// - プレイヤーの初期向きや方位を表す。
+// 主な値:
+// - EAST,WEST,NORTH,SOUTH: 東西南北の4方向
 typedef enum e_dir
 {
 	EAST = 0,
@@ -31,10 +38,13 @@ typedef enum e_dir
 }t_dir;
 
 
-// 四方向の壁テクスチャを配列 index で一元管理するための列挙体
+// 壁テクスチャIDを表す列挙体
+// 役割:
+// - 四方向の壁テクスチャを配列 index で一元管理する。
+// 主な値:
 // - TEX_NO,TEX_SO,TEX_WE,TEX_EA: 北,南,西,東の壁に対応する
 // - TEX_COUNT: 配列長
-//  + 壁テクスチャ配列は必ず '0 <= index < TEX_COUNT' を満たす
+//   + 壁テクスチャ配列は `0 <= index < TEX_COUNT` を満たす
 typedef enum e_tex_id
 {
 	TEX_NO = 0,
@@ -44,19 +54,26 @@ typedef enum e_tex_id
 	TEX_COUNT
 }	t_tex_id;
 
-// 四方向の壁テクスチャのファイルパス名を保持する構造体
-// - path: 壁テクスチャのファイルパス
-//  + path[TEX_NO] = NO, path[TEX_SO] = SO, path[TEX_WE] = WE, path[TEX_EA] = EA
+// 四方向の壁テクスチャのファイルパスを保持する構造体
+// 役割:
+// - 設定ファイルから読んだテクスチャパスを方向ごとに保持する。
+// 主な値:
+// - path: 壁テクスチャのファイルパス配列
+//   + `path[TEX_NO] = NO`, `path[TEX_SO] = SO`
+//   + `path[TEX_WE] = WE`, `path[TEX_EA] = EA`
 typedef struct s_tex_path
 {
 	char		*path[TEX_COUNT];
 }	t_tex_path;
 
-// プレイヤーの初期位置,向きを保持する構造体
+// プレイヤーの初期位置と向きを保持する構造体
+// 役割:
+// - map 上のスポーン位置と初期方角を保持する。
+// 主な値:
 // - row: map上の行番号
 // - col: map上の列番号
 // - dir: プレイヤーの初期向き
-//  + 'EAST','WEST','NORTH','SOUTH'の列挙値で設定する
+//   + `EAST`, `WEST`, `NORTH`, `SOUTH` のいずれか
 typedef struct s_spawn
 {
 	int		row;
@@ -66,10 +83,13 @@ typedef struct s_spawn
 
 
 // map本体を保持する構造体
-// - grid: mapの各行をもつ二次元配列
-// - width: mapの最大幅
-//  + mapの各行数が同じ長さであるとは限らないので、最長幅を保持する
-// - height: mapの行数 
+// 役割:
+// - map の2次元文字列と、そのサイズ情報を保持する。
+// 主な値:
+// - grid: map の各行をもつ二次元配列
+// - width: map の最大幅
+//   + 各行の長さが同じとは限らないので、最長幅を保持する
+// - height: map の行数
 typedef struct s_map
 {
 	char	**grid;
@@ -78,11 +98,14 @@ typedef struct s_map
 }	t_map;
 
 
-// '.cub'のパース処理を行い、処理結果を出力する構造体
+// `.cub` のパース結果を保持する構造体
+// 役割:
+// - 実行に必要な設定値を、パース済みの形でまとめて持つ。
+// 主な値:
 // - tex: 四方向のテクスチャパス
 // - floor_color: 床色
 // - ceiling_color: 天井色
-// - map: map本体
+// - map: map 本体
 // - spawn: プレイヤーの初期位置と向き
 typedef struct s_config
 {
