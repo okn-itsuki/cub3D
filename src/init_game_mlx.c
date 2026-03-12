@@ -1,6 +1,16 @@
 #include "game_mlx_init.h"
 
 
+// 何する関数か:
+// - `init_mask` を見て、初期化済みの MLX 資源を逆順で一括開放する。
+// 参照でいじった値:
+// - `game_state->render.frame.img` を破棄して `NULL` に戻す。
+// - `game_state->render.frame.addr` を `NULL` に戻す。
+// - `game_state->mlx.win` を破棄して `NULL` に戻す。
+// - `game_state->mlx.mlx` を破棄して `NULL` に戻す。
+// - `game_state->init_mask` から破棄済み bit を落とす。
+// 戻り値の意味:
+// - なし。
 static void	destroy_game_mlx(t_game *game_state)
 {
 	if ((game_state->init_mask & GAME_FRAME_READY) != 0u)
@@ -27,6 +37,14 @@ static void	destroy_game_mlx(t_game *game_state)
 	}
 }
 
+// 何する関数か:
+// - MLX本体を起動する。
+// 参照でいじった値:
+// - `game_state->mlx.mlx` に `mlx_init()` の返り値を入れる。
+// - `game_state->init_mask` に MLX 初期化済み bit を立てる。
+// 戻り値の意味:
+// - `true`: MLX本体の起動に成功した。
+// - `false`: MLX本体の起動に失敗した。
 static bool	init_mlx_instance(t_game *game_state)
 {
 	game_state->mlx.mlx = mlx_init();
@@ -36,6 +54,14 @@ static bool	init_mlx_instance(t_game *game_state)
 	return (true);
 }
 
+// 何する関数か:
+// - 描画先の window を作る。
+// 参照でいじった値:
+// - `game_state->mlx.win` に `mlx_new_window()` の返り値を入れる。
+// - `game_state->init_mask` に window 初期化済み bit を立てる。
+// 戻り値の意味:
+// - `true`: window の作成に成功した。
+// - `false`: window の作成に失敗した。
 static bool	init_game_window(t_game *game_state)
 {
 	game_state->mlx.win = mlx_new_window(game_state->mlx.mlx,
@@ -46,6 +72,16 @@ static bool	init_game_window(t_game *game_state)
 	return (true);
 }
 
+// 何する関数か:
+// - off-screen描画用の frame画像を作り、pixel書き込み情報を設定する。
+// 参照でいじった値:
+// - `game_state->render.frame.img` に画像本体を入れる。
+// - `game_state->render.frame.addr`, `bpp`, `line_len`, `endian` を設定する。
+// - `game_state->render.frame.width`, `height` を画面サイズで設定する。
+// - `game_state->init_mask` に frame 初期化済み bit を立てる。
+// 戻り値の意味:
+// - `true`: frame画像の作成と pixel 情報の取得に成功した。
+// - `false`: 途中で失敗した。
 static bool	init_frame_buffer(t_game *game_state)
 {
 	t_img	*frame_buffer;
@@ -64,6 +100,17 @@ static bool	init_frame_buffer(t_game *game_state)
 	return (true);
 }
 
+// 何する関数か:
+// - `game_state` を 0 初期化し、MLX本体, window, frame画像を順に作る。
+// 参照でいじった値:
+// - `game_state` 全体を 0 で埋める。
+// - `game_state->mlx.mlx`, `game_state->mlx.win` を設定する。
+// - `game_state->render.frame` の各項目を設定する。
+// - `game_state->init_mask` に各初期化段階の bit を立てる。
+// - 失敗したら、`init_mask` を見て初期化済み資源だけを一括開放する。
+// 戻り値の意味:
+// - `true`: MLX初期化が最後まで完了した。
+// - `false`: 途中で失敗した。
 bool	init_game_mlx(t_game *game_state)
 {
 	ft_memset(game_state, 0, sizeof(*game_state));
