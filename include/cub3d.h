@@ -2,6 +2,8 @@
 #define CUB3D_H
 
 #include "cub_config.h"
+#include "mlx.h"
+#include "libft.h"
 
 #define WIN_W 1280
 #define WIN_H 960
@@ -249,5 +251,4 @@ typedef struct s_game
 	uint32_t		init_mask;
 	bool			running;
 }	t_game;
-
 #endif
