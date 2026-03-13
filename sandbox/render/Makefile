@@ -1,6 +1,6 @@
 NAME := render_sandbox
 
-ROOT_DIR := ..
+ROOT_DIR := ../../
 SRC_DIR := $(ROOT_DIR)/src
 INCLUDE_DIR := $(ROOT_DIR)/include
 LIBFT_DIR := $(ROOT_DIR)/libft
