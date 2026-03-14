@@ -11,7 +11,7 @@ RM := rm -f
 RMDIR := rm -rf
 UNAME_S := $(shell uname -s)
 
-SANDBOX_SRC := $(shell find . -maxdepth 1 -type f -name '*.c' 2>/dev/null)
+SANDBOX_SRC := $(shell find . -type f -name '*.c' 2>/dev/null)
 APP_SRC := $(shell find $(SRC_DIR) -type f -name '*.c' ! -name 'main.c' 2>/dev/null)
 SRC := $(SANDBOX_SRC) $(APP_SRC)
 OBJ := $(patsubst ./%.c,$(OBJ_DIR)/sandbox/%.o,$(SANDBOX_SRC)) \
