@@ -55,10 +55,10 @@ static void	free_sandbox_config(t_config *config){
 }
 
 static bool	init_tex_path(t_tex_path *tex){
-	tex->path[TEX_NO] = strdup("texture/direction/north.xpm");
-	tex->path[TEX_SO] = strdup("texture/direction/south.xpm");
-	tex->path[TEX_WE] = strdup("texture/direction/west.xpm");
-	tex->path[TEX_EA] = strdup("texture/direction/east.xpm");
+	tex->path[TEX_NO] = strdup("../../texture/direction/north.xpm");
+	tex->path[TEX_SO] = strdup("../../texture/direction/south.xpm");
+	tex->path[TEX_WE] = strdup("../../texture/direction/west.xpm");
+	tex->path[TEX_EA] = strdup("../../texture/direction/east.xpm");
 	return tex->path[TEX_NO] != NULL && tex->path[TEX_SO] != NULL
 		&& tex->path[TEX_WE] != NULL && tex->path[TEX_EA] != NULL;
 }
@@ -177,13 +177,21 @@ static bool	init_sandbox_config(t_config *config){
 	return true;
 }
 
+
+static void print_texture_path(t_tex_path path_dir){
+	printf("%s\n",path_dir.path[TEX_NO]);
+	printf("%s\n",path_dir.path[TEX_SO]);
+	printf("%s\n",path_dir.path[TEX_WE]);
+	printf("%s\n",path_dir.path[TEX_EA]);
+}
+
 int	main(void){
 	t_config	config;
 
 	if (!init_sandbox_config(&config))
 		return 1;
 
-	
+	print_texture_path(config.tex);
 
 	free_sandbox_config(&config);
 	return 0;
