@@ -6,7 +6,7 @@
 /*   By: iokuno <iokuno@student.42tokyo.jp>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 16:45:16 by iokuno            #+#    #+#             */
-/*   Updated: 2026/03/14 18:39:41 by iokuno           ###   ########.fr       */
+/*   Updated: 2026/03/14 21:34:53 by iokuno           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ void	init_config(t_config *config)
 	config->map.height = 0;
 	config->spawn.row = -1;
 	config->spawn.col = -1;
-	config->spawn.dir = NORTH;
+	config->spawn.dir = DIR_UNSET;
 }
 
 // 概要 : t_rgbの初期化
