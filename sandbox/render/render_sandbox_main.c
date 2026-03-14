@@ -1,6 +1,6 @@
 
-
 #include "cub3d.h"
+#include "game_init.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -177,34 +177,28 @@ static bool	init_sandbox_config(t_config *config){
 	return true;
 }
 
-
 // debug
 void	debug_print_texture_image_all(const t_assets *assets);
 
-// src
-bool	init_game_mlx(t_game *game_state);
-bool	texture_xpm_load_all(t_assets *assets, t_tex_path path_dir, t_mlx mlx);
-
 int	main(void)
 {
-	t_config	config;
 	t_game		game;
 	bool		ok;
 
-	config = (t_config){0};
 	game = (t_game){0};
-	if (!init_sandbox_config(&config))
+	if (!init_sandbox_config(&game.config))
 		return (1);
-	
 	// src/
-	init_game_mlx(&game);
-	ok = texture_xpm_load_all(&game.assets, config.tex, game.mlx);
+	ok = init_game_mlx(&game);
+	if (ok)
+		ok = init_game_wall_textures(&game, game.config.tex);
 
 	// debug/
-	debug_print_texture_image_all(&game.assets);
+	if (ok)
+		debug_print_texture_image_all(&game.assets);
 
-
-	free_sandbox_config(&config);
+	destroy_game_resources(&game);
+	free_sandbox_config(&game.config);
 	if (!ok)
 		return (1);
 	return (0);

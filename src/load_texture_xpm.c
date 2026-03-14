@@ -1,5 +1,4 @@
-#include "cub3d.h"
-#include "cub_config.h"
+#include "game_init.h"
 #include <stdlib.h>
 
 // 何する関数か:
@@ -38,6 +37,25 @@ static void	destroy_texture_slot(void *mlx_instance, t_texture *wall_texture)
 }
 
 // 何する関数か:
+// - 読み込み済みの壁テクスチャをすべて破棄し、空状態へ戻す。
+// 参照でいじった値:
+// - `assets->wall[]` の `loaded == true` なスロットを破棄して空状態へ戻す。
+// 戻り値の意味:
+// - なし。
+void	destroy_texture_assets(t_assets *assets, t_mlx mlx_context){
+	int	texture_index;
+
+	if (assets == NULL || mlx_context.mlx == NULL)
+		return ;
+	texture_index = 0;
+	while (texture_index < TEX_COUNT){
+		if (assets->wall[texture_index].loaded)
+			destroy_texture_slot(mlx_context.mlx, &assets->wall[texture_index]);
+		++texture_index;
+	}
+}
+
+// 何する関数か:
 // - XPM ファイル 1 枚を MLX に読み込み、pixel 書き込み情報を取得する。
 // - 途中で失敗したら、画像を破棄してスロットを空状態に戻す。
 // 参照でいじった値:
@@ -69,13 +87,14 @@ static bool	load_wall_texture(t_texture *wall_texture, void *mlx_instance,char *
 
 // 何する関数か:
 // - 四方向の壁テクスチャを順に読み込み、`assets->wall[]` に設定する。
+// - 途中で失敗したら、先に読み込めていた画像もまとめて破棄して戻る。
 // 参照でいじった値:
 // - `assets->wall[]` の各スロットに画像本体と pixel 情報を設定する。
-// - 読み込みに失敗したスロットは空状態のままにする。
+// - 読み込みに失敗したら、`assets->wall[]` 全体を空状態へ戻す。
 // 戻り値の意味:
 // - `true`: 必要な壁テクスチャをすべて読み込めた。
 // - `false`: 引数不正またはどれか 1 枚でも読み込みに失敗した。
-bool	texture_xpm_load_all(t_assets *assets, t_tex_path texture_paths,t_mlx mlx_context){
+static bool	load_all_wall_textures(t_assets *assets, t_tex_path texture_paths,t_mlx mlx_context){
 	int	texture_index;
 
 	if (assets == NULL || mlx_context.mlx == NULL)
@@ -83,9 +102,31 @@ bool	texture_xpm_load_all(t_assets *assets, t_tex_path texture_paths,t_mlx mlx_c
 	texture_index = 0;
 	while (texture_index < TEX_COUNT){
 		if (load_wall_texture(&assets->wall[texture_index],
-				mlx_context.mlx, texture_paths.path[texture_index]) == false)
+				mlx_context.mlx, texture_paths.path[texture_index]) == false){
+			destroy_texture_assets(assets, mlx_context);
 			return false;
+		}
 		++texture_index;
 	}
+	return true;
+}
+
+// 何する関数か:
+// - `t_game` に属する壁テクスチャを読み込み、成功時に init mask を更新する。
+// 参照でいじった値:
+// - `game_state->assets.wall[]` に画像本体と pixel 情報を設定する。
+// - `game_state->init_mask` の `GAME_WALL_TEXTURES_READY` bit を更新する。
+// 戻り値の意味:
+// - `true`: 壁テクスチャの読み込みが最後まで成功した。
+// - `false`: 引数不正または読み込み途中で失敗した。
+bool	init_game_wall_textures(t_game *game_state, t_tex_path texture_paths){
+	if (game_state == NULL || game_state->mlx.mlx == NULL)
+		return false;
+	game_state->init_mask &= ~GAME_WALL_TEXTURES_READY;
+	destroy_texture_assets(&game_state->assets, game_state->mlx);
+	if (load_all_wall_textures(&game_state->assets, texture_paths,
+			game_state->mlx) == false)
+		return false;
+	game_state->init_mask |= GAME_WALL_TEXTURES_READY;
 	return true;
 }

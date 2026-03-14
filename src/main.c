@@ -1,5 +1,4 @@
 #include "cub3d.h"
-#include "parse_test.h"
 #include <stdio.h>
 
 int	main(int argc, char **argv)
