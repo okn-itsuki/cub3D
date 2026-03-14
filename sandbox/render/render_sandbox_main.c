@@ -185,14 +185,52 @@ static void print_texture_path(t_tex_path path_dir){
 	printf("%s\n",path_dir.path[TEX_EA]);
 }
 
-int	main(void){
+#include <stdio.h>
+
+static void	debug_print_texture_image_one(const t_texture *tex)
+{
+	if (tex == NULL)
+		return ;
+	printf(
+		"loaded=%d img=%p w=%d h=%d addr=%p bpp=%d line=%d endian=%d\n",
+		(int)tex->loaded,
+		(void *)tex->image.img,
+		tex->image.width,
+		tex->image.height,
+		(void *)tex->image.addr,
+		tex->image.bpp,
+		tex->image.line_len,
+		tex->image.endian
+	);
+}
+
+void	debug_print_texture_image_all(const t_assets *assets)
+{
+	debug_print_texture_image_one(&assets->wall[TEX_NO]);
+	debug_print_texture_image_one(&assets->wall[TEX_SO]);
+	debug_print_texture_image_one(&assets->wall[TEX_WE]);
+	debug_print_texture_image_one(&assets->wall[TEX_EA]);
+}
+#include "game_mlx_init.h"
+
+bool	texture_xpm_load_all(t_assets *assets, t_tex_path path_dir, t_mlx mlx);
+
+int	main(void)
+{
 	t_config	config;
+	t_game		game;
+	bool		ok;
 
+	config = (t_config){0};
+	game = (t_game){0};
 	if (!init_sandbox_config(&config))
-		return 1;
-
+		return (1);
+	init_game_mlx(&game);
+	ok = texture_xpm_load_all(&game.assets, config.tex, game.mlx);
+	debug_print_texture_image_all(&game.assets);
 	print_texture_path(config.tex);
-
 	free_sandbox_config(&config);
-	return 0;
+	if (!ok)
+		return (1);
+	return (0);
 }
