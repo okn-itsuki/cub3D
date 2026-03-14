@@ -27,7 +27,7 @@ static bool	texture_xpm_load_one(t_assets *assets, t_tex_path path_dir, t_mlx ml
 }
 
 
-bool texture_xpm_load_all(t_assets *assets,t_tex_path path_dir,t_mlx mlx,t_tex_id id){
+bool texture_xpm_load_all(t_assets *assets,t_tex_path path_dir,t_mlx mlx){
 
 	if(texture_xpm_load_one(assets,path_dir,mlx,TEX_NO) == false)
 		return false;
@@ -37,4 +37,5 @@ bool texture_xpm_load_all(t_assets *assets,t_tex_path path_dir,t_mlx mlx,t_tex_i
 		return false;
 	if(texture_xpm_load_one(assets,path_dir,mlx,TEX_EA) == false)
 		return false;
+	return true;
 }
