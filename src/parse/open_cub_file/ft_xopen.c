@@ -6,11 +6,11 @@
 /*   By: iokuno <iokuno@student.42tokyo.jp>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 14:05:27 by iokuno            #+#    #+#             */
-/*   Updated: 2026/03/14 14:25:19 by iokuno           ###   ########.fr       */
+/*   Updated: 2026/03/14 14:44:56 by iokuno           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-// #include "libft.h"
+#include "libft.h"
 #include <fcntl.h>
 #include <stdio.h>
 
@@ -19,7 +19,7 @@
 // エラー時の処理 : 正常にopenできなければ、エラー出力後にプログラムをエラー終了する
 int	ft_xopen(char *filename)
 {
-	int fd;
+	int	fd;
 
 	fd = open(filename, O_RDONLY);
 	if (fd < 0)
