@@ -1,6 +1,6 @@
 
-
 #include "cub3d.h"
+#include "game_init.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -55,10 +55,10 @@ static void	free_sandbox_config(t_config *config){
 }
 
 static bool	init_tex_path(t_tex_path *tex){
-	tex->path[TEX_NO] = strdup("texture/direction/north.xpm");
-	tex->path[TEX_SO] = strdup("texture/direction/south.xpm");
-	tex->path[TEX_WE] = strdup("texture/direction/west.xpm");
-	tex->path[TEX_EA] = strdup("texture/direction/east.xpm");
+	tex->path[TEX_NO] = strdup("../../texture/direction/north.xpm");
+	tex->path[TEX_SO] = strdup("../../texture/direction/south.xpm");
+	tex->path[TEX_WE] = strdup("../../texture/direction/west.xpm");
+	tex->path[TEX_EA] = strdup("../../texture/direction/east.xpm");
 	return tex->path[TEX_NO] != NULL && tex->path[TEX_SO] != NULL
 		&& tex->path[TEX_WE] != NULL && tex->path[TEX_EA] != NULL;
 }
@@ -177,14 +177,29 @@ static bool	init_sandbox_config(t_config *config){
 	return true;
 }
 
-int	main(void){
-	t_config	config;
+// debug
+void	debug_print_texture_image_all(const t_assets *assets);
 
-	if (!init_sandbox_config(&config))
-		return 1;
+int	main(void)
+{
+	t_game		game;
+	bool		ok;
 
-	
+	game = (t_game){0};
+	if (!init_sandbox_config(&game.config))
+		return (1);
+	// src/
+	ok = init_game_mlx(&game);
+	if (ok)
+		ok = init_game_wall_textures(&game, game.config.tex);
 
-	free_sandbox_config(&config);
-	return 0;
+	// debug/
+	if (ok)
+		debug_print_texture_image_all(&game.assets);
+
+	destroy_game_resources(&game);
+	free_sandbox_config(&game.config);
+	if (!ok)
+		return (1);
+	return (0);
 }

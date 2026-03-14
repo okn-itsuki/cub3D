@@ -1,10 +1,29 @@
-#include "game_mlx_init.h"
+#include "game_init.h"
 #include "libft.h"
 #include <stdlib.h>
 
 // 何する関数か:
-// - `init_mask` を見て、初期化済みの MLX 資源を逆順で一括開放する。
+// - MLX 初期化が所有する実行時フィールドだけを 0 初期化する。
 // 参照でいじった値:
+// - `game_state->mlx` を 0 で埋める。
+// - `game_state->render.frame` を 0 で埋める。
+// - `game_state->assets` を 0 で埋める。
+// - `game_state->init_mask` から MLX/texture 関連 bit を落とす。
+// 戻り値の意味:
+// - なし。
+static void	reset_game_runtime_resources(t_game *game_state)
+{
+	ft_bzero(&game_state->mlx, sizeof(game_state->mlx));
+	ft_bzero(&game_state->render.frame, sizeof(game_state->render.frame));
+	ft_bzero(&game_state->assets, sizeof(game_state->assets));
+	game_state->init_mask &= ~(GAME_MLX_READY | GAME_WINDOW_READY
+			| GAME_FRAME_READY | GAME_WALL_TEXTURES_READY);
+}
+
+// 何する関数か:
+// - `init_mask` を見て、初期化済みのゲーム資源を逆順で一括開放する。
+// 参照でいじった値:
+// - `game_state->assets.wall[]` を必要なら破棄して空状態へ戻す。
 // - `game_state->render.frame.img` を破棄して `NULL` に戻す。
 // - `game_state->render.frame.addr` を `NULL` に戻す。
 // - `game_state->mlx.win` を破棄して `NULL` に戻す。
@@ -12,8 +31,15 @@
 // - `game_state->init_mask` から破棄済み bit を落とす。
 // 戻り値の意味:
 // - なし。
-static void	destroy_game_mlx(t_game *game_state)
+void	destroy_game_resources(t_game *game_state)
 {
+	if (game_state == NULL)
+		return ;
+	if ((game_state->init_mask & GAME_WALL_TEXTURES_READY) != 0u)
+	{
+		destroy_texture_assets(&game_state->assets, game_state->mlx);
+		game_state->init_mask &= ~GAME_WALL_TEXTURES_READY;
+	}
 	if ((game_state->init_mask & GAME_FRAME_READY) != 0u)
 	{
 		mlx_destroy_image(game_state->mlx.mlx, game_state->render.frame.img);
@@ -102,9 +128,10 @@ static bool	init_frame_buffer(t_game *game_state)
 }
 
 // 何する関数か:
-// - `game_state` を 0 初期化し、MLX本体, window, frame画像を順に作る。
+// - MLX 関連の実行時フィールドを初期化し、MLX本体, window, frame画像を順に作る。
 // 参照でいじった値:
-// - `game_state` 全体を 0 で埋める。
+// - `game_state->mlx`, `game_state->render.frame`, `game_state->assets` を
+//   初期状態へ戻す。
 // - `game_state->mlx.mlx`, `game_state->mlx.win` を設定する。
 // - `game_state->render.frame` の各項目を設定する。
 // - `game_state->init_mask` に各初期化段階の bit を立てる。
@@ -114,17 +141,19 @@ static bool	init_frame_buffer(t_game *game_state)
 // - `false`: 途中で失敗した。
 bool	init_game_mlx(t_game *game_state)
 {
-	ft_memset(game_state, 0, sizeof(*game_state));
+	if (game_state == NULL)
+		return (false);
+	reset_game_runtime_resources(game_state);
 	if (init_mlx_instance(game_state) == false)
 		return (false);
 	if (init_game_window(game_state) == false)
 	{
-		destroy_game_mlx(game_state);
+		destroy_game_resources(game_state);
 		return (false);
 	}
 	if (init_frame_buffer(game_state) == false)
 	{
-		destroy_game_mlx(game_state);
+		destroy_game_resources(game_state);
 		return (false);
 	}
 	return (true);

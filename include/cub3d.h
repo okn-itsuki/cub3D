@@ -263,8 +263,9 @@ typedef struct s_frame_clock
 // - running: loop を継続するかどうか
 // 初期化順:
 // - config -> mlx -> win -> frame -> assets.wall[] -> player/input/clock -> running
-// 解放順:
-// - assets.wall[] -> render.frame -> mlx.win -> mlx.mlx -> config
+// runtime資源の解放順:
+// - assets.wall[] -> render.frame -> mlx.win -> mlx.mlx
+// - config の解放は parser/sandbox 側の責務で別途行う
 typedef struct s_game
 {
 	t_config		config;
