@@ -31,6 +31,7 @@ typedef struct s_rgb
 // - EAST,WEST,NORTH,SOUTH: 東西南北の4方向
 typedef enum e_dir
 {
+	DIR_UNSET = -1,
 	EAST = 0,
 	WEST,
 	NORTH,
@@ -39,6 +40,7 @@ typedef enum e_dir
 
 
 // 壁テクスチャIDを表す列挙体
+//
 // 役割:
 // - 四方向の壁テクスチャを配列 index で一元管理する。
 // 主な値:

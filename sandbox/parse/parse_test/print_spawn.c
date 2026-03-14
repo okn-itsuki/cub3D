@@ -4,6 +4,8 @@
 
 static const char	*dir_to_str(t_dir dir)
 {
+	if (dir == DIR_UNSET)
+		return ("DIR_UNSET : It hasn't changed from the initial value.");
 	if (dir == NORTH)
 		return ("NORTH");
 	if (dir == SOUTH)
@@ -12,7 +14,7 @@ static const char	*dir_to_str(t_dir dir)
 		return ("EAST");
 	if (dir == WEST)
 		return ("WEST");
-	return ("UNKNOWN");
+	return ("UNKNOWN : The value is invalid.");
 }
 
 // 概要 : スポーン座標と初期方角を表示する
