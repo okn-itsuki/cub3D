@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 /*
 parserを通さずに描画とraycastを実装するための簡易エントリポイント.
 maps/good/library.cub 相当のt_configを手動で組み立てる.
@@ -36,7 +35,7 @@ EA texture/direction/east.xpm
 
 static void	free_sandbox_config(t_config *config){
 	int	i;
-
+	
 	i = 0;
 	while (i < TEX_COUNT){
 		free(config->tex.path[i]);
@@ -44,7 +43,7 @@ static void	free_sandbox_config(t_config *config){
 		i++;
 	}
 	if (config->map.grid == NULL)
-		return ;
+	return ;
 	i = 0;
 	while (i < config->map.height){
 		free(config->map.grid[i]);
@@ -60,7 +59,7 @@ static bool	init_tex_path(t_tex_path *tex){
 	tex->path[TEX_WE] = strdup("../../texture/direction/west.xpm");
 	tex->path[TEX_EA] = strdup("../../texture/direction/east.xpm");
 	return tex->path[TEX_NO] != NULL && tex->path[TEX_SO] != NULL
-		&& tex->path[TEX_WE] != NULL && tex->path[TEX_EA] != NULL;
+	&& tex->path[TEX_WE] != NULL && tex->path[TEX_EA] != NULL;
 }
 
 static inline void	add_value(t_rgb *color){
@@ -101,13 +100,13 @@ static int	get_map_width(void){
 	int		i;
 	int		width;
 	size_t	row_len;
-
+	
 	i = 0;
 	width = 0;
 	while (i < get_map_height()){
 		row_len = strlen(g_map_src[i]);
 		if ((int)row_len > width)
-			width = (int)row_len;
+		width = (int)row_len;
 		i++;
 	}
 	return width;
@@ -116,15 +115,15 @@ static int	get_map_width(void){
 static bool	get_spawn_dir(char cell, t_dir *dir)
 {
 	if (cell == 'N')
-		*dir = NORTH;
+	*dir = NORTH;
 	else if (cell == 'S')
-		*dir = SOUTH;
+	*dir = SOUTH;
 	else if (cell == 'E')
-		*dir = EAST;
+	*dir = EAST;
 	else if (cell == 'W')
-		*dir = WEST;
+	*dir = WEST;
 	else
-		return false;
+	return false;
 	return true;
 }
 
@@ -133,23 +132,23 @@ static bool	init_map_and_spawn(t_map *map, t_spawn *spawn){
 	int		x;
 	int		y;
 	bool	found_spawn;
-
+	
 	map->height = get_map_height();
 	map->width = get_map_width();
 	map->grid = calloc((size_t)map->height + 1, sizeof(*map->grid));
 	if (map->grid == NULL)
-		return false;
+	return false;
 	found_spawn = false;
 	y = 0;
 	while (y < map->height){
 		map->grid[y] = strdup(g_map_src[y]);
 		if (map->grid[y] == NULL)
-			return false;
+		return false;
 		x = 0;
 		while (map->grid[y][x] != '\0'){
 			if (get_spawn_dir(map->grid[y][x], &dir)){
 				if (found_spawn)
-					return false;
+				return false;
 				found_spawn = true;
 				spawn->row = y;
 				spawn->col = x;
@@ -179,6 +178,11 @@ static bool	init_sandbox_config(t_config *config){
 
 // debug
 void	debug_print_texture_image_all(const t_assets *assets);
+void debug_print_player_pos_all(const t_player player);
+
+// #include "cub3d.h"
+// #include "game_init.h"
+
 
 int	main(void)
 {
@@ -192,10 +196,13 @@ int	main(void)
 	ok = init_game_mlx(&game);
 	if (ok)
 		ok = init_game_wall_textures(&game, game.config.tex);
-
+	if (ok)
+		init_player(&game.player, game.config.spawn);
 	// debug/
 	if (ok)
 		debug_print_texture_image_all(&game.assets);
+	if (ok)
+		debug_print_player_pos_all(game.player);
 
 	destroy_game_resources(&game);
 	free_sandbox_config(&game.config);

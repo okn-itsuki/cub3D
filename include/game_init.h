@@ -19,6 +19,7 @@ typedef enum e_game_init_mask
 
 bool	init_game_mlx(t_game *game_state);
 bool	init_game_wall_textures(t_game *game_state, t_tex_path texture_paths);
+void	init_player(t_player *player, t_spawn spawn);
 void	destroy_texture_assets(t_assets *assets, t_mlx mlx_context);
 void	destroy_game_resources(t_game *game_state);
 
