@@ -3,6 +3,9 @@
 
 
 
+#define PLAYER_MOVE_SPEED 3.0
+#define PLAYER_ROT_SPEED 2.0
+#define FOV_HALF_TAN 0.66
 
 // linux,mac対応のゴリ押しkeycode
 #ifndef KEYCODES_H
