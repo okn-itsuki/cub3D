@@ -1,5 +1,5 @@
 #include "game_init.h"
-
+#include "game_config.h"
 
 // 何する関数か:
 // - 方角に対応する前方ベクトルを返す。
