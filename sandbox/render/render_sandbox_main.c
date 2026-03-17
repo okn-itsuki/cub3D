@@ -178,11 +178,29 @@ static bool	init_sandbox_config(t_config *config){
 
 // debug
 void	debug_print_texture_image_all(const t_assets *assets);
-void debug_print_player_pos_all(const t_player player);
+void	debug_print_player_pos_all(const t_player player);
 
 // #include "cub3d.h"
 // #include "game_init.h"
+#include "game_config.h"
 
+static int	sandbox_loop_hook(t_game *game)
+{
+	if (game->input.quit || !game->running)
+	{
+		destroy_game_resources(game);
+		free_sandbox_config(&game->config);
+		exit(0);
+	}
+	if (game->input.move_forward || game->input.move_backward
+		|| game->input.strafe_left || game->input.strafe_right
+		|| game->input.turn_left || game->input.turn_right)
+		printf("fwd=%d bwd=%d sl=%d sr=%d tl=%d tr=%d\n",
+			game->input.move_forward, game->input.move_backward,
+			game->input.strafe_left, game->input.strafe_right,
+			game->input.turn_left, game->input.turn_right);
+	return (0);
+}
 
 int	main(void)
 {
@@ -192,21 +210,25 @@ int	main(void)
 	game = (t_game){0};
 	if (!init_sandbox_config(&game.config))
 		return (1);
-	// src/
 	ok = init_game_mlx(&game);
 	if (ok)
 		ok = init_game_wall_textures(&game, game.config.tex);
 	if (ok)
 		init_player(&game.player, game.config.spawn);
-	// debug/
-	if (ok)
-		debug_print_texture_image_all(&game.assets);
-	if (ok)
-		debug_print_player_pos_all(game.player);
-
-	destroy_game_resources(&game);
-	free_sandbox_config(&game.config);
 	if (!ok)
+	{
+		destroy_game_resources(&game);
+		free_sandbox_config(&game.config);
 		return (1);
+	}
+	// debug/
+	debug_print_texture_image_all(&game.assets);
+	debug_print_player_pos_all(game.player);
+
+	init_input(&game.input);
+	game.running = true;
+	register_hooks(&game);
+	mlx_loop_hook(game.mlx.mlx, sandbox_loop_hook, &game);
+	mlx_loop(game.mlx.mlx);
 	return (0);
 }

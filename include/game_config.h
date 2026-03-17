@@ -8,10 +8,6 @@
 #define FOV_HALF_TAN 0.66
 
 // linux,mac対応のゴリ押しkeycode
-#ifndef KEYCODES_H
-# define KEYCODES_H
-
-
 # if defined(__linux__)
 #  define PLATFORM_LINUX 1
 # elif defined(__APPLE__) && defined(__MACH__)
@@ -46,7 +42,5 @@
 #  define KEY_W         13
 
 # endif
-
-#endif
 
 #endif
