@@ -55,9 +55,10 @@ int	handle_close(t_game *game)
 	return (0);
 }
 
+
 void	register_hooks(t_game *game)
 {
-	mlx_hook(game->mlx.win, 2, 1L << 0, handle_key_press, game);	// KeyPress
-	mlx_hook(game->mlx.win, 3, 1L << 1, handle_key_release, game);	// KeyRelease
-	mlx_hook(game->mlx.win, 17, 0, handle_close, game);			// DestroyNotify
+	mlx_hook(game->mlx.win, EVENT_KEY_PRESS, MASK_KEY_PRESS, handle_key_press, game);	
+	mlx_hook(game->mlx.win, EVENT_KEY_RELEASE, MASK_KEY_RELEASE, handle_key_release, game);	
+	mlx_hook(game->mlx.win, EVENT_DESTROY, 0, handle_close, game);
 }
