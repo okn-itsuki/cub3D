@@ -3,12 +3,19 @@
 
 
 
+#define PLAYER_MOVE_SPEED 3.0
+#define PLAYER_ROT_SPEED 2.0 
+#define FOV_HALF_TAN 0.66 
+
+
+#define EVENT_KEY_PRESS      2 
+#define EVENT_KEY_RELEASE    3 
+#define EVENT_DESTROY        17
+#define MASK_KEY_PRESS       (1L << 0)
+#define MASK_KEY_RELEASE     (1L << 1)
+
 
 // linux,mac対応のゴリ押しkeycode
-#ifndef KEYCODES_H
-# define KEYCODES_H
-
-
 # if defined(__linux__)
 #  define PLATFORM_LINUX 1
 # elif defined(__APPLE__) && defined(__MACH__)
@@ -43,7 +50,5 @@
 #  define KEY_W         13
 
 # endif
-
-#endif
 
 #endif
