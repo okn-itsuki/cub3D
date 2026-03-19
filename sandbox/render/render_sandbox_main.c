@@ -202,6 +202,9 @@ static int	sandbox_loop_hook(t_game *game)
 	return (0);
 }
 
+#include "ray_casting.h"
+
+
 int	main(void)
 {
 	t_game		game;
@@ -221,6 +224,8 @@ int	main(void)
 		free_sandbox_config(&game.config);
 		return (1);
 	}
+
+
 	// debug/
 	debug_print_texture_image_all(&game.assets);
 	debug_print_player_pos_all(game.player);
@@ -228,6 +233,7 @@ int	main(void)
 	init_input(&game.input);
 	game.running = true;
 	register_hooks(&game);
+	render_frame(&game);
 	mlx_loop_hook(game.mlx.mlx, sandbox_loop_hook, &game);
 	mlx_loop(game.mlx.mlx);
 	return (0);

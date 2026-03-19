@@ -29,8 +29,7 @@ CFLAGS += -g3 -O0
 endif
 
 ifeq ($(UNAME_S),Darwin)
-MLX_DIR := $(ROOT_DIR)/minilibx-macos
-MLX_REPO := https://github.com/dannywillems/minilibx-mac-osx.git
+MLX_DIR := $(ROOT_DIR)/minilibx_opengl_20191021
 LDLIBS += -lmlx -framework OpenGL -framework AppKit
 else ifeq ($(UNAME_S),Linux)
 MLX_DIR := $(ROOT_DIR)/minilibx-linux
@@ -64,8 +63,10 @@ $(OBJ_DIR)/%.o: $(ROOT_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
 
+ifneq ($(MLX_REPO),)
 $(MLX_DIR):
 	git clone $(MLX_REPO) $(MLX_DIR)
+endif
 
 $(MLX): | $(MLX_DIR)
 	$(MAKE) -C $(MLX_DIR)
