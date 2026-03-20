@@ -2,10 +2,15 @@
 #define GAME_CONFIG_H
 
 
+#define MIN_PERP_WALL_DIST   1e-4
+#define CAMERA_X_MIN         (-1.0)
+#define CAMERA_X_SCALE       2.0
+#define RAY_DELTA_INF        1e30
+#define MAP_WALL_CELL        '1'
 
 #define PLAYER_MOVE_SPEED 3.0
 #define PLAYER_ROT_SPEED 2.0 
-#define FOV_HALF_TAN 0.66 
+#define FOV_HALF_TAN 0.90
 
 
 #define EVENT_KEY_PRESS      2 

@@ -1,4 +1,5 @@
 #include "ray_casting.h"
+#include "game_config.h"
 #include <math.h>
 
 // 何する関数か:
@@ -10,7 +11,7 @@
 static void	init_ray_direction(t_ray *ray, const t_player *player, int col)
 {
 	ray->column = col;
-	ray->camera_x = 2.0 * col / (WIN_W - 1) - 1.0;
+	ray->camera_x = CAMERA_X_SCALE * col / (WIN_W - 1) + CAMERA_X_MIN;
 	ray->ray_dir.x = player->dir.x + player->plane.x * ray->camera_x;
 	ray->ray_dir.y = player->dir.y + player->plane.y * ray->camera_x;
 	ray->map.x = (int)player->pos.x;
@@ -26,11 +27,11 @@ static void	init_ray_direction(t_ray *ray, const t_player *player, int col)
 static void	init_dda_step(t_ray *ray, const t_player *player)
 {
 	if (ray->ray_dir.x == 0)
-		ray->delta_dist.x = 1e30;
+		ray->delta_dist.x = RAY_DELTA_INF;
 	else
 		ray->delta_dist.x = fabs(1.0 / ray->ray_dir.x);
 	if (ray->ray_dir.y == 0)
-		ray->delta_dist.y = 1e30;
+		ray->delta_dist.y = RAY_DELTA_INF;
 	else
 		ray->delta_dist.y = fabs(1.0 / ray->ray_dir.y);
 	if (ray->ray_dir.x < 0)
@@ -65,10 +66,7 @@ static void	init_dda_step(t_ray *ray, const t_player *player)
 // - なし。
 static void	run_dda(t_ray *ray, const t_map *map)
 {
-	int	hit;
-
-	hit = 0;
-	while (hit == 0)
+	while (1)
 	{
 		if (ray->side_dist.x < ray->side_dist.y)
 		{
@@ -82,8 +80,8 @@ static void	run_dda(t_ray *ray, const t_map *map)
 			ray->map.y += ray->step.y;
 			ray->hit_side = HIT_Y;
 		}
-		if (map->grid[ray->map.y][ray->map.x] == '1')
-			hit = 1;
+		if (map->grid[ray->map.y][ray->map.x] == MAP_WALL_CELL)
+			break ;
 	}
 }
 
@@ -99,8 +97,8 @@ static void	calc_wall_dist(t_ray *ray, const t_player *player)
 		ray->perp_wall_dist = ray->side_dist.x - ray->delta_dist.x;
 	else
 		ray->perp_wall_dist = ray->side_dist.y - ray->delta_dist.y;
-	if (ray->perp_wall_dist < 0.0001)
-		ray->perp_wall_dist = 0.0001;
+	if (ray->perp_wall_dist < MIN_PERP_WALL_DIST)
+		ray->perp_wall_dist = MIN_PERP_WALL_DIST;
 	if (ray->hit_side == HIT_X)
 		ray->wall_x = player->pos.y
 			+ ray->perp_wall_dist * ray->ray_dir.y;
