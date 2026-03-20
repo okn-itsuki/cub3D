@@ -1,5 +1,6 @@
 #include "ray_casting.h"
 #include "mlx.h"
+#include "game_config.h"
 
 // 何する関数か:
 // - frame 画像の指定座標に1ピクセルを書き込む。
@@ -11,7 +12,7 @@ static void	put_pixel(t_img *img, int x, int y, uint32_t color)
 {
 	int	offset;
 
-	offset = y * img->line_len + x * (img->bpp / 8);
+	offset = y * img->line_len + x * (img->bpp /  BITS_PER_BYTE);
 	*(uint32_t *)(img->addr + offset) = color;
 }
 

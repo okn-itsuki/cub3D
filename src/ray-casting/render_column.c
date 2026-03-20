@@ -1,5 +1,5 @@
 #include "ray_casting.h"
-
+#include "game_config.h"
 // 何する関数か:
 // - 壁の垂直距離から描画範囲 (draw_start, draw_end) を計算する。
 // 参照でいじった値:
@@ -88,9 +88,9 @@ static void	draw_wall_stripe(t_img *frame, t_column *col,
 		if (tex_y >= tex->height)
 			tex_y = tex->height - 1;
 		col->tex_pos += col->tex_step;
-		src_off = tex_y * tex->line_len + col->tex_x * (tex->bpp / 8);
+		src_off = tex_y * tex->line_len + col->tex_x * (tex->bpp / BITS_PER_BYTE);
 		color = *(uint32_t *)(tex->addr + src_off);
-		dst_off = y * frame->line_len + x * (frame->bpp / 8);
+		dst_off = y * frame->line_len + x * (frame->bpp / BITS_PER_BYTE);
 		*(uint32_t *)(frame->addr + dst_off) = color;
 		y++;
 	}

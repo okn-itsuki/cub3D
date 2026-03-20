@@ -2,6 +2,8 @@
 #define GAME_CONFIG_H
 
 
+#define BITS_PER_BYTE 8
+
 #define MIN_PERP_WALL_DIST   1e-4
 #define CAMERA_X_MIN         (-1.0)
 #define CAMERA_X_SCALE       2.0
