@@ -1,5 +1,6 @@
 #include "ray_casting.h"
 #include "game_config.h"
+
 // 何する関数か:
 // - 壁の垂直距離から描画範囲 (draw_start, draw_end) を計算する。
 // 参照でいじった値:
@@ -66,53 +67,69 @@ static void	calc_tex_coords(t_column *col, const t_ray *ray,
 }
 
 // 何する関数か:
-// - テクスチャからピクセルを読み、frame バッファの1列に書き込む。
+// - 1列の天井→壁→床を1パスで frame バッファに書き込む。
 // 参照でいじった値:
-// - `frame->addr` の該当ピクセルを書き換える。
+// - `frame->addr` の該当列ピクセルを書き換える。
 // - `col->tex_pos` をピクセルごとに進める。
 // 戻り値の意味:
 // - なし。
-static void	draw_wall_stripe(t_img *frame, t_column *col,
-		const t_img *tex, int x)
+static void	draw_column_stripe(t_img *frame, t_column *col,
+		const t_img *tex, uint32_t *colors)
 {
 	int			y;
 	int			tex_y;
-	int			src_off;
-	int			dst_off;
-	uint32_t	color;
+	int			dst_x_off;
+	int			tex_x_off;
 
-	y = col->draw_start;
+	dst_x_off = col->column * (frame->bpp / BITS_PER_BYTE);
+	tex_x_off = col->tex_x * (tex->bpp / BITS_PER_BYTE);
+	y = 0;
+	while (y < col->draw_start)
+	{
+		*(uint32_t *)(frame->addr + y * frame->line_len + dst_x_off)
+			= colors[0];
+		y++;
+	}
 	while (y <= col->draw_end)
 	{
 		tex_y = (int)col->tex_pos;
 		if (tex_y >= tex->height)
 			tex_y = tex->height - 1;
 		col->tex_pos += col->tex_step;
-		src_off = tex_y * tex->line_len + col->tex_x * (tex->bpp / BITS_PER_BYTE);
-		color = *(uint32_t *)(tex->addr + src_off);
-		dst_off = y * frame->line_len + x * (frame->bpp / BITS_PER_BYTE);
-		*(uint32_t *)(frame->addr + dst_off) = color;
+		*(uint32_t *)(frame->addr + y * frame->line_len + dst_x_off)
+			= *(uint32_t *)(tex->addr + tex_y * tex->line_len + tex_x_off);
+		y++;
+	}
+	while (y < WIN_H)
+	{
+		*(uint32_t *)(frame->addr + y * frame->line_len + dst_x_off)
+			= colors[1];
 		y++;
 	}
 }
 
 // 何する関数か:
-// - ray の結果から壁1列をテクスチャ付きで frame に描画する。
+// - ray の結果から1列を天井/壁/床まとめて frame に描画する。
 // 参照でいじった値:
 // - `render->column` の全フィールドを設定する。
 // - `render->frame` の該当ピクセルを書き換える。
 // 戻り値の意味:
 // - なし。
-void	render_column(t_render *render, const t_assets *assets)
+void	render_column(t_render *render, const t_assets *assets,
+		uint32_t ceil_color, uint32_t floor_color)
 {
 	int			line_height;
 	t_column	*col;
 	const t_img	*tex;
+	uint32_t	colors[2];
 
 	col = &render->column;
+	col->column = render->ray.column;
 	line_height = calc_draw_range(col, render->ray.perp_wall_dist);
 	choose_texture(col, &render->ray);
 	tex = &assets->wall[col->tex_id].image;
 	calc_tex_coords(col, &render->ray, tex, line_height);
-	draw_wall_stripe(&render->frame, col, tex, render->ray.column);
+	colors[0] = ceil_color;
+	colors[1] = floor_color;
+	draw_column_stripe(&render->frame, col, tex, colors);
 }

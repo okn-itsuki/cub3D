@@ -197,6 +197,8 @@ typedef struct s_ray
 // 役割:
 // - 壁1列ぶんの描画結果を保持する。
 // 主な値:
+// - column: この列の画面x座標
+//   + `0 <= column < WIN_W`
 // - draw_start: 壁の描画開始y座標
 // - draw_end: 壁の描画終了y座標
 //   + `0 <= draw_start <= draw_end < WIN_H` に clamp する
@@ -207,6 +209,7 @@ typedef struct s_ray
 // - tex_pos: 現在のテクスチャyの実数位置
 typedef struct s_column
 {
+	int			column;
 	int			draw_start;
 	int			draw_end;
 	t_tex_id	tex_id;
