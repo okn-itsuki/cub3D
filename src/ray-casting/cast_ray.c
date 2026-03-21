@@ -10,8 +10,10 @@
 // - なし。
 static void	init_ray_direction(t_ray *ray, const t_player *player, int col)
 {
+	const double	camera_x_step = CAMERA_X_SCALE / (double)(WIN_W - 1);
+
 	ray->column = col;
-	ray->camera_x = CAMERA_X_SCALE * col / (WIN_W - 1) + CAMERA_X_MIN;
+	ray->camera_x = CAMERA_X_MIN + col * camera_x_step;
 	ray->ray_dir.x = player->dir.x + player->plane.x * ray->camera_x;
 	ray->ray_dir.y = player->dir.y + player->plane.y * ray->camera_x;
 	ray->map.x = (int)player->pos.x;
@@ -26,14 +28,12 @@ static void	init_ray_direction(t_ray *ray, const t_player *player, int col)
 // - なし。
 static void	init_dda_step(t_ray *ray, const t_player *player)
 {
-	if (ray->ray_dir.x == 0)
-		ray->delta_dist.x = RAY_DELTA_INF;
-	else
-		ray->delta_dist.x = fabs(1.0 / ray->ray_dir.x);
-	if (ray->ray_dir.y == 0)
-		ray->delta_dist.y = RAY_DELTA_INF;
-	else
-		ray->delta_dist.y = fabs(1.0 / ray->ray_dir.y);
+	ray->delta_dist.x = (ray->ray_dir.x == 0)
+		* RAY_DELTA_INF + (ray->ray_dir.x != 0)
+		* fabs(1.0 / ray->ray_dir.x);
+	ray->delta_dist.y = (ray->ray_dir.y == 0)
+		* RAY_DELTA_INF + (ray->ray_dir.y != 0)
+		* fabs(1.0 / ray->ray_dir.y);
 	if (ray->ray_dir.x < 0)
 	{
 		ray->step.x = -1;
@@ -94,17 +94,21 @@ static void	run_dda(t_ray *ray, const t_map *map)
 static void	calc_wall_dist(t_ray *ray, const t_player *player)
 {
 	if (ray->hit_side == HIT_X)
+	{
 		ray->perp_wall_dist = ray->side_dist.x - ray->delta_dist.x;
-	else
-		ray->perp_wall_dist = ray->side_dist.y - ray->delta_dist.y;
-	if (ray->perp_wall_dist < MIN_PERP_WALL_DIST)
-		ray->perp_wall_dist = MIN_PERP_WALL_DIST;
-	if (ray->hit_side == HIT_X)
+		if (ray->perp_wall_dist < MIN_PERP_WALL_DIST)
+			ray->perp_wall_dist = MIN_PERP_WALL_DIST;
 		ray->wall_x = player->pos.y
 			+ ray->perp_wall_dist * ray->ray_dir.y;
+	}
 	else
+	{
+		ray->perp_wall_dist = ray->side_dist.y - ray->delta_dist.y;
+		if (ray->perp_wall_dist < MIN_PERP_WALL_DIST)
+			ray->perp_wall_dist = MIN_PERP_WALL_DIST;
 		ray->wall_x = player->pos.x
 			+ ray->perp_wall_dist * ray->ray_dir.x;
+	}
 	ray->wall_x = ray->wall_x - floor(ray->wall_x);
 }
 
