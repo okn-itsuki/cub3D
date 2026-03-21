@@ -11,8 +11,9 @@
 #define MAP_WALL_CELL        '1'
 
 #define PLAYER_MOVE_SPEED 3.0
-#define PLAYER_ROT_SPEED 2.0 
-#define FOV_HALF_TAN 0.90
+#define PLAYER_ROT_SPEED 2.0
+#define FOV_HALF_TAN 1.8
+// #define COLLISION_MARGIN 0.2
 
 
 #define EVENT_KEY_PRESS      2 

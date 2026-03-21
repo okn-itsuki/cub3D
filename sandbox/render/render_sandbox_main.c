@@ -67,14 +67,14 @@ static inline void	add_value(t_rgb *color){
 }
 
 static void	init_color(t_rgb *floor_color, t_rgb *ceiling_color){
-	floor_color->r = 139;
-	floor_color->g = 99;
-	floor_color->b = 58;
+	floor_color->r = 255;
+	floor_color->g = 255;
+	floor_color->b = 255;
 	floor_color->is_set = true;
 	add_value(floor_color);
-	ceiling_color->r = 171;
-	ceiling_color->g = 154;
-	ceiling_color->b = 137;
+	ceiling_color->r = 000;
+	ceiling_color->g = 000;
+	ceiling_color->b = 000;
 	ceiling_color->is_set = true;
 	add_value(ceiling_color);
 }
@@ -184,6 +184,8 @@ void	debug_print_player_pos_all(const t_player player);
 // #include "game_init.h"
 #include "game_config.h"
 
+#include "ray_casting.h"
+
 static int	sandbox_loop_hook(t_game *game)
 {
 	if (game->input.quit || !game->running)
@@ -192,18 +194,9 @@ static int	sandbox_loop_hook(t_game *game)
 		free_sandbox_config(&game->config);
 		exit(0);
 	}
-	if (game->input.move_forward || game->input.move_backward
-		|| game->input.strafe_left || game->input.strafe_right
-		|| game->input.turn_left || game->input.turn_right)
-		printf("fwd=%d bwd=%d sl=%d sr=%d tl=%d tr=%d\n",
-			game->input.move_forward, game->input.move_backward,
-			game->input.strafe_left, game->input.strafe_right,
-			game->input.turn_left, game->input.turn_right);
+	render_frame(game);
 	return (0);
 }
-
-#include "ray_casting.h"
-
 
 int	main(void)
 {
@@ -225,7 +218,6 @@ int	main(void)
 		return (1);
 	}
 
-
 	// debug/
 	debug_print_texture_image_all(&game.assets);
 	debug_print_player_pos_all(game.player);
@@ -233,7 +225,6 @@ int	main(void)
 	init_input(&game.input);
 	game.running = true;
 	register_hooks(&game);
-	render_frame(&game);
 	mlx_loop_hook(game.mlx.mlx, sandbox_loop_hook, &game);
 	mlx_loop(game.mlx.mlx);
 	return (0);
