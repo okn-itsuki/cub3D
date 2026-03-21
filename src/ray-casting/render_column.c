@@ -76,19 +76,19 @@ static void	calc_tex_coords(t_column *col, const t_ray *ray,
 static void	draw_column_stripe(t_img *frame, t_column *col,
 		const t_img *tex, uint32_t *colors)
 {
-	int			y;
-	int			tex_y;
-	int			dst_x_off;
-	int			tex_x_off;
+	int		y;
+	int		tex_y;
+	int		tex_x_off;
+	char	*dst;
 
-	dst_x_off = col->column * (frame->bpp / BITS_PER_BYTE);
 	tex_x_off = col->tex_x * (tex->bpp / BITS_PER_BYTE);
+	dst = frame->addr + col->column * (frame->bpp / BITS_PER_BYTE);
 	y = 0;
 	while (y < col->draw_start)
 	{
-		*(uint32_t *)(frame->addr + y * frame->line_len + dst_x_off)
-			= colors[0];
-		y++;
+		*(uint32_t *)dst = colors[0];
+		dst += frame->line_len;
+		++y;
 	}
 	while (y <= col->draw_end)
 	{
@@ -96,15 +96,16 @@ static void	draw_column_stripe(t_img *frame, t_column *col,
 		if (tex_y >= tex->height)
 			tex_y = tex->height - 1;
 		col->tex_pos += col->tex_step;
-		*(uint32_t *)(frame->addr + y * frame->line_len + dst_x_off)
+		*(uint32_t *)dst
 			= *(uint32_t *)(tex->addr + tex_y * tex->line_len + tex_x_off);
-		y++;
+		dst += frame->line_len;
+		++y;
 	}
 	while (y < WIN_H)
 	{
-		*(uint32_t *)(frame->addr + y * frame->line_len + dst_x_off)
-			= colors[1];
-		y++;
+		*(uint32_t *)dst = colors[1];
+		dst += frame->line_len;
+		++y;
 	}
 }
 
