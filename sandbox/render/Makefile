@@ -28,6 +28,11 @@ ifneq ($(strip $(DEBUG)),)
 CFLAGS += -g3 -O0
 endif
 
+ifneq ($(strip $(DASHBOARD)),)
+CPPFLAGS += -DDEBUG_DASHBOARD
+CFLAGS += -g3 -O0
+endif
+
 ifeq ($(UNAME_S),Darwin)
 MLX_DIR := $(ROOT_DIR)/minilibx_opengl_20191021
 LDLIBS += -lmlx -framework OpenGL -framework AppKit
@@ -84,6 +89,10 @@ fclean: clean
 
 re: fclean all
 
+debug:
+	$(MAKE) fclean
+	$(MAKE) DASHBOARD=1 all
+
 -include $(DEP)
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re debug

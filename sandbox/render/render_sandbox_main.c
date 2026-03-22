@@ -186,6 +186,31 @@ void	debug_print_player_pos_all(const t_player player);
 
 #include "ray_casting.h"
 
+#ifdef DEBUG_DASHBOARD
+# include "debug/debug_dashboard.h"
+
+typedef struct s_sandbox_ctx
+{
+	t_game		*game;
+	t_dashboard	*dash;
+}	t_sandbox_ctx;
+
+static int	sandbox_loop_hook_debug(t_sandbox_ctx *ctx)
+{
+	if (ctx->game->input.quit || !ctx->game->running)
+	{
+		dashboard_cleanup();
+		destroy_game_resources(ctx->game);
+		free_sandbox_config(&ctx->game->config);
+		exit(0);
+	}
+	render_frame(ctx->game);
+	dashboard_update(ctx->dash, ctx->game);
+	return (0);
+}
+
+#else
+
 static int	sandbox_loop_hook(t_game *game)
 {
 	if (game->input.quit || !game->running)
@@ -198,10 +223,16 @@ static int	sandbox_loop_hook(t_game *game)
 	return (0);
 }
 
+#endif
+
 int	main(void)
 {
 	t_game		game;
 	bool		ok;
+#ifdef DEBUG_DASHBOARD
+	t_dashboard	dash;
+	t_sandbox_ctx	ctx;
+#endif
 
 	game = (t_game){0};
 	if (!init_sandbox_config(&game.config))
@@ -225,7 +256,17 @@ int	main(void)
 	init_input(&game.input);
 	game.running = true;
 	register_hooks(&game);
+#ifdef DEBUG_DASHBOARD
+	dashboard_init(&dash);
+	ctx.game = &game;
+	ctx.dash = &dash;
+	mlx_loop_hook(game.mlx.mlx, sandbox_loop_hook_debug, &ctx);
+#else
 	mlx_loop_hook(game.mlx.mlx, sandbox_loop_hook, &game);
+#endif
 	mlx_loop(game.mlx.mlx);
+#ifdef DEBUG_DASHBOARD
+	dashboard_cleanup();
+#endif
 	return (0);
 }
