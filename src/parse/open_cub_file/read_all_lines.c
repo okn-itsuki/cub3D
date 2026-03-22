@@ -6,13 +6,13 @@
 /*   By: okunoitsuki <okunoitsuki@student.42.fr>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/14 14:26:54 by iokuno            #+#    #+#             */
-/*   Updated: 2026/03/22 21:42:58 by okunoitsuki      ###   ########.fr       */
+/*   Updated: 2026/03/22 21:50:03 by okunoitsuki      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
-#include "get_next_line.h"
 
 // 概要 : 配列を拡張する（realloc的な動き）
 // 返り値 : NULL終端でsizeの大きさに拡張された配列
@@ -53,7 +53,7 @@ static void free_lines(char **lines)
 
 // 概要 : FDから全行をメモリに書き込みNULL終端のchar**で返す
 // 返り値 : ファイルを1行ずつ保有する二次元配列（ダブルポインタ）
-// エラー処理 :
+// エラー処理 : 配列の拡張が失敗したら途中まで確保した配列を全て開放してNULLを返す。
 // 開放義務 : アリ
 
 char **read_all_lines(int fd)
