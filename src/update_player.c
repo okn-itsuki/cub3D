@@ -2,6 +2,13 @@
 #include "game_config.h"
 #include <math.h>
 
+// 何する関数か:
+// - `dir` と `plane` を `angle`[rad] だけ回転行列で回す。
+// 参照でいじった値:
+// - `player->dir` を回転後の方向ベクトルに更新する。
+// - `player->plane` を回転後のカメラ平面ベクトルに更新する。
+// 戻り値の意味:
+// - なし。
 static void	rotate_player(t_player *player, double angle)
 {
 	double	cos_a;
@@ -19,6 +26,13 @@ static void	rotate_player(t_player *player, double angle)
 	player->plane.y = old_plane.x * sin_a + old_plane.y * cos_a;
 }
 
+// 何する関数か:
+// - ワールド座標 `(x, y)` が壁セルかどうかを判定する。
+// 参照でいじった値:
+// - なし。
+// 戻り値の意味:
+// - `true`: 壁または map 範囲外。
+// - `false`: 通行可能。
 static bool	is_wall(const t_map *map, double x, double y)
 {
 	int	ix;
@@ -31,6 +45,13 @@ static bool	is_wall(const t_map *map, double x, double y)
 	return (map->grid[iy][ix] == MAP_WALL_CELL);
 }
 
+// 何する関数か:
+// - `delta` 分だけプレイヤーを移動させる。壁があれば軸ごとにブロックする。
+// 参照でいじった値:
+// - `player->pos` を衝突判定後の座標に更新する。
+//   + X軸・Y軸を独立に判定し、壁沿いスライドを実現する。
+// 戻り値の意味:
+// - なし。
 static void	move_with_collision(t_player *player, const t_map *map,
 		t_vec2d delta)
 {
@@ -55,6 +76,13 @@ static void	move_with_collision(t_player *player, const t_map *map,
 		player->pos.y = new_y;
 }
 
+// 何する関数か:
+// - 入力状態と delta time からプレイヤーの回転・移動を1フレーム分更新する。
+// 参照でいじった値:
+// - `player->dir`, `player->plane` を回転入力に応じて更新する。
+// - `player->pos` を移動入力に応じて壁衝突判定付きで更新する。
+// 戻り値の意味:
+// - なし。
 void	update_player(t_player *player, const t_input *input,
 		const t_map *map, double dt)
 {
