@@ -80,6 +80,9 @@ static void	run_dda(t_ray *ray, const t_map *map)
 			ray->map.y += ray->step.y;
 			ray->hit_side = HIT_Y;
 		}
+		if (ray->map.x < 0 || ray->map.x >= map->width
+			|| ray->map.y < 0 || ray->map.y >= map->height)
+			break ;
 		if (map->grid[ray->map.y][ray->map.x] == MAP_WALL_CELL)
 			break ;
 	}
