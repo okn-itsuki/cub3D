@@ -197,14 +197,7 @@ typedef struct s_sandbox_ctx
 
 static int	sandbox_loop_hook_debug(t_sandbox_ctx *ctx)
 {
-	if (ctx->game->input.quit || !ctx->game->running)
-	{
-		dashboard_cleanup();
-		destroy_game_resources(ctx->game);
-		free_sandbox_config(&ctx->game->config);
-		exit(0);
-	}
-	render_frame(ctx->game);
+	game_loop_tick(ctx->game);
 	dashboard_update(ctx->dash, ctx->game);
 	return (0);
 }
@@ -213,13 +206,7 @@ static int	sandbox_loop_hook_debug(t_sandbox_ctx *ctx)
 
 static int	sandbox_loop_hook(t_game *game)
 {
-	if (game->input.quit || !game->running)
-	{
-		destroy_game_resources(game);
-		free_sandbox_config(&game->config);
-		exit(0);
-	}
-	render_frame(game);
+	game_loop_tick(game);
 	return (0);
 }
 
