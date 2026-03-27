@@ -57,9 +57,9 @@ static void	calc_tex_coords(t_column *col, const t_ray *ray,
 	col->tex_x = (int)(ray->wall_x * tex->width);
 	if (col->tex_x >= tex->width)
 		col->tex_x = tex->width - 1;
-	if (ray->hit_side == HIT_X && ray->ray_dir.x > 0)
+	if (ray->hit_side == HIT_X && ray->ray_dir.x < 0)
 		col->tex_x = tex->width - col->tex_x - 1;
-	if (ray->hit_side == HIT_Y && ray->ray_dir.y < 0)
+	if (ray->hit_side == HIT_Y && ray->ray_dir.y > 0)
 		col->tex_x = tex->width - col->tex_x - 1;
 	col->tex_step = (double)tex->height / (double)line_h;
 	col->tex_pos = (col->draw_start - WIN_H / 2 + line_h / 2)
