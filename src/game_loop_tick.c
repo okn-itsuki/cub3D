@@ -39,16 +39,23 @@ bool	game_loop_tick(t_game *game)
 	if (game->input.quit || !game->running)
 	{
 		destroy_game_resources(game);
+		destroy_config(&game->config);
 		exit(0);
 	}
 	if (get_current_time_us(&now_us) == false)
 	{
 		destroy_game_resources(game);
+		destroy_config(&game->config);
 		exit(0);
 	}
-	game->clock.delta_sec = (now_us - game->clock.last_tick_us) * SEC_PER_US;
-	if (game->clock.delta_sec > 0.1)
-		game->clock.delta_sec = 0.1;
+	if (game->clock.last_tick_us == 0)
+		game->clock.delta_sec = 0.0;
+	else
+	{
+		game->clock.delta_sec = (now_us - game->clock.last_tick_us) * SEC_PER_US;
+		if (game->clock.delta_sec > 0.1)
+			game->clock.delta_sec = 0.1;
+	}
 	game->clock.last_tick_us = now_us;
 	game->clock.frame_index++;
 	update_player(&game->player, &game->input,

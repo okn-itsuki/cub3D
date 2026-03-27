@@ -70,9 +70,11 @@ static void	move_with_collision(t_player *player, const t_map *map,
 		margin_y = -COLLISION_MARGIN;
 	new_x = player->pos.x + delta.x;
 	new_y = player->pos.y + delta.y;
-	if (!is_wall(map, new_x + margin_x, player->pos.y))
+	if (!is_wall(map, new_x + margin_x, player->pos.y + COLLISION_MARGIN)
+		&& !is_wall(map, new_x + margin_x, player->pos.y - COLLISION_MARGIN))
 		player->pos.x = new_x;
-	if (!is_wall(map, player->pos.x, new_y + margin_y))
+	if (!is_wall(map, player->pos.x + COLLISION_MARGIN, new_y + margin_y)
+		&& !is_wall(map, player->pos.x - COLLISION_MARGIN, new_y + margin_y))
 		player->pos.y = new_y;
 }
 

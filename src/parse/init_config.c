@@ -12,6 +12,7 @@
 
 #include "libft.h"
 #include "cub_config.h"
+#include <stdlib.h>
 
 static void	init_rgb(t_rgb *rgb);
 
@@ -55,4 +56,36 @@ static void	init_rgb(t_rgb *rgb)
 	rgb->b = 0;
 	rgb->value = 0;
 	rgb->is_set = false;
+}
+
+// 何する関数か:
+// - `t_config` が所有する動的メモリ（テクスチャパスと map grid）を解放する。
+// 参照でいじった値:
+// - `config->tex.path[]` を `free` して `NULL` に戻す。
+// - `config->map.grid[]` の各行と配列本体を `free` して `NULL` に戻す。
+// 戻り値の意味:
+// - なし。
+void	destroy_config(t_config *config)
+{
+	int	i;
+
+	if (config == NULL)
+		return ;
+	i = 0;
+	while (i < TEX_COUNT)
+	{
+		free(config->tex.path[i]);
+		config->tex.path[i] = NULL;
+		i++;
+	}
+	if (config->map.grid == NULL)
+		return ;
+	i = 0;
+	while (i < config->map.height)
+	{
+		free(config->map.grid[i]);
+		i++;
+	}
+	free(config->map.grid);
+	config->map.grid = NULL;
 }

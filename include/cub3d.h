@@ -4,8 +4,8 @@
 #include "cub_config.h"
 #include "mlx.h"
 
-#define WIN_W 1280
-#define WIN_H 960
+#define WIN_W 800
+#define WIN_H 600
 
 // MLXの画像1枚を表す構造体
 // 役割:
