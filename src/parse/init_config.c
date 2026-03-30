@@ -12,7 +12,11 @@
 
 /**
  * @file init_config.c
- * @brief t_configの初期化と破棄
+ * @brief `t_config`の初期化
+ *
+ * @details
+ * パーサが値を書き込み始める前に,すべてのフィールドを
+ * 「未設定だが安全に破棄できる状態」へ整える役割を持つ.
  */
 #include "libft.h"
 #include "cub_config.h"
