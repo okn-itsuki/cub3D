@@ -2,6 +2,7 @@
 #define CUB_CONFIG_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 
@@ -17,11 +18,11 @@
 //   + `F 0,0,0` のような黒も有効値なので、別で管理する
 typedef struct s_rgb
 {
-	int	r;
-	int	g;
-	int	b;
+	int			r;
+	int			g;
+	int			b;
 	uint32_t	value;
-	bool is_set;
+	bool		is_set;
 }	t_rgb;
 
 // 方角を表す列挙体
@@ -91,6 +92,7 @@ typedef struct s_spawn
 // - grid: map の各行をもつ二次元配列
 // - width: map の最大幅
 //   + 各行の長さが同じとは限らないので、最長幅を保持する
+//   + 実行時は `map_cell_at()` / `map_is_solid()` 経由で参照する
 // - height: map の行数
 typedef struct s_map
 {
@@ -117,5 +119,13 @@ typedef struct s_config
 	t_map		map;
 	t_spawn		spawn;
 }	t_config;
+
+// map 1cell を安全に参照する。
+// - 範囲外 / 行外 / NULL 行は `' '` を返す
+char	map_cell_at(const t_map *map, int x, int y);
+
+// 移動不能 cell かどうかを返す。
+// - `'1'` と void (`' '`) は壁として扱う
+bool	map_is_solid(const t_map *map, int x, int y);
 
 #endif
