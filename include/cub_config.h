@@ -6,6 +6,7 @@
 #define CUB_CONFIG_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /**
@@ -17,11 +18,11 @@
  */
 typedef struct s_rgb
 {
-	int	r;			/**< 赤成分 (0-255) */
-	int	g;			/**< 緑成分 (0-255) */
-	int	b;			/**< 青成分 (0-255) */
+	int			r;		/**< 赤成分 (0-255) */
+	int			g;		/**< 緑成分 (0-255) */
+	int			b;		/**< 青成分 (0-255) */
 	uint32_t	value;	/**< パック済み色値 `(r << 16) | (g << 8) | b` */
-	bool is_set;	/**< 値が設定済みかどうか */
+	bool		is_set;	/**< 値が設定済みかどうか */
 }	t_rgb;
 
 /**
@@ -82,6 +83,7 @@ typedef struct s_spawn
  *
  * マップの2次元文字列とそのサイズ情報を保持する。
  * 各行の長さは不均一の場合があるため、widthは最長行の幅を保持する。
+ * 実行時の参照は`map_cell_at()`/`map_is_solid()`経由を想定する。
  */
 typedef struct s_map
 {
@@ -104,5 +106,13 @@ typedef struct s_config
 	t_map		map;			/**< マップ本体 */
 	t_spawn		spawn;			/**< プレイヤーの初期位置と向き */
 }	t_config;
+
+// map 1cell を安全に参照する。
+// - 範囲外 / 行外 / NULL 行は `' '` を返す
+char	map_cell_at(const t_map *map, int x, int y);
+
+// 移動不能 cell かどうかを返す。
+// - `'1'` と void (`' '`) は壁として扱う
+bool	map_is_solid(const t_map *map, int x, int y);
 
 #endif

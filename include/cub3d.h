@@ -92,25 +92,26 @@ typedef struct s_player
 
 /**
  * @struct s_texture
- * @brief 壁テクスチャ1枚分の実画像とロード状態を保持する構造体
+ * @brief 壁テクスチャ1枚分の実画像を保持する構造体
  *
- * 部分初期化失敗時は `loaded == true` のスロットだけを破棄対象にする。
+ * ロード済みかどうかの所有状態は`t_assets.wall_mask`で管理する。
  */
 typedef struct s_texture
 {
 	t_img		image;	/**< MLX上にロード済みの画像データ */
-	bool		loaded;	/**< 正常にロード済みかどうか */
 }	t_texture;
 
 /**
  * @struct s_assets
  * @brief 描画用アセット (MLXに読み込んだ画像資源)
  *
- * パスは t_config.tex が、実画像は本構造体が管理する。
+ * パスは`t_config.tex`が、実画像は本構造体が管理する。
+ * `wall_mask`には、部分初期化時にどの壁テクスチャを所有しているかを記録する。
  */
 typedef struct s_assets
 {
 	t_texture	wall[TEX_COUNT];	/**< 四方向の壁テクスチャ */
+	uint32_t	wall_mask;			/**< 所有中の壁テクスチャを表すビットマスク */
 }	t_assets;
 
 /**
@@ -201,20 +202,19 @@ typedef struct s_frame_clock
  * @par 初期化順
  * config -> mlx -> win -> frame -> assets.wall[] -> player/input/clock -> running
  *
- * @par 実行時資源の解放順
- * assets.wall[] -> render.frame -> mlx.win -> mlx.mlx
- * @n configの解放はparser/sandbox側の責務で別途行う。
+ * @par 破棄順
+ * assets.wall[] -> render.frame -> mlx.win -> mlx.mlx -> config
  */
 typedef struct s_game
 {
-	t_config		config;		/**< .cubファイルのパース結果 */
-	t_mlx			mlx;		/**< MLX本体とウィンドウ */
-	t_assets		assets;		/**< 壁テクスチャ画像 */
-	t_render		render;		/**< フレーム画像とレイキャスト作業領域 */
-	t_player		player;		/**< プレイヤーの実行時状態 */
-	t_input			input;		/**< 入力状態 */
-	t_frame_clock	clock;		/**< フレーム時間 */
-	uint32_t		init_mask;	/**< 初期化済み資源を表すビットマスク */
-	bool			running;	/**< ゲームループ継続フラグ */
+	t_config		config;			/**< .cubファイルのパース結果 */
+	t_mlx			mlx;			/**< MLX本体とウィンドウ */
+	t_assets		assets;			/**< 壁テクスチャ画像 */
+	t_render		render;			/**< フレーム画像とレイキャスト作業領域 */
+	t_player		player;			/**< プレイヤーの実行時状態 */
+	t_input			input;			/**< 入力状態 */
+	t_frame_clock	clock;			/**< フレーム時間 */
+	uint32_t		runtime_mask;	/**< 初期化済み実行時資源を表すビットマスク */
+	bool			running;		/**< ゲームループ継続フラグ */
 }	t_game;
 #endif
