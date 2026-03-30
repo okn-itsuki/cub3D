@@ -1,6 +1,11 @@
 /**
  * @file cast_ray.c
  * @brief DDAアルゴリズムによるレイキャスト処理
+ *
+ * @details
+ * 1画面列につき1本のレイを飛ばし,次の縦境界と横境界のどちらへ先に到達するかを
+ * 逐次比較しながらグリッドを進む.ピクセル単位の総当たりではなく,
+ * セル境界単位で進むため,壁探索を非常に少ない比較回数で行える.
  */
 #include "render/render_internal.h"
 #include "game_config.h"
@@ -29,6 +34,9 @@ static void	init_ray_direction(t_ray *ray, const t_player *player, int col)
 /**
  * @brief DDAループでグリッドを1セルずつ進み,壁に衝突するまで繰り返す
  *
+ * `side_dist.x`と`side_dist.y`の小さい方を選ぶことで,
+ * レイが次に横線へ当たるか縦線へ当たるかを正しく追跡できる.
+ *
  * @param[in,out] ray DDA状態 (side_dist/map/hit_sideを更新)
  * @param[in]     map マップデータ
  */
@@ -55,6 +63,9 @@ static void	run_dda(t_ray *ray, const t_map *map)
 
 /**
  * @brief 魚眼補正済みの壁距離と壁面上の衝突位置を計算する
+ *
+ * `perp_wall_dist`は描画高さに使う距離で,視線方向の角度差による歪みを抑える.
+ * `wall_x`はテクスチャの横方向サンプリング位置の元になる.
  *
  * @param[in,out] ray    壁距離と衝突位置の書き込み先
  * @param[in]     player プレイヤーの位置

@@ -1,3 +1,7 @@
+/**
+ * @file render_internal.h
+ * @brief renderモジュール内部で共有する補助関数宣言
+ */
 #ifndef RENDER_INTERNAL_H
 # define RENDER_INTERNAL_H
 

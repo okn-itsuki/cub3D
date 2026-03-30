@@ -1,12 +1,18 @@
 /**
  * @file render_column.c
  * @brief 壁1列分の描画処理 (描画範囲計算・テクスチャ選択・ピクセル書き込み)
+ *
+ * @details
+ * このファイルは,レイキャストで得た幾何情報を「実際の画素列」へ変換する役割を持つ.
+ * 背景は別で塗りつぶされている前提にし,ここでは壁区間だけへ責務を限定している.
  */
 #include "ray_casting.h"
 #include "game_config.h"
 
 /**
  * @brief 壁の垂直距離から描画範囲(draw_start,draw_end)を計算する
+ *
+ * 見かけの壁高さは距離の逆数で決まり,画面中央を基準に上下へ伸ばす.
  *
  * @param[out] col            描画範囲の書き込み先
  * @param[in]  perp_wall_dist 魚眼補正済みの壁までの垂直距離
@@ -30,6 +36,8 @@ static int	calc_draw_range(t_column *col, double perp_wall_dist)
 
 /**
  * @brief 衝突面とレイ方向から使用する壁テクスチャを決定する
+ *
+ * 東西の壁か南北の壁かに加えて,どちら向きの面を見ているかでN/S/E/Wを切り替える.
  */
 static void	choose_texture(t_column *col, const t_ray *ray)
 {
@@ -45,6 +53,9 @@ static void	choose_texture(t_column *col, const t_ray *ray)
 
 /**
  * @brief テクスチャのx座標・ステップ量・初期y位置を計算する
+ *
+ * `tex_x`は衝突位置`wall_x`から決まり,`tex_step`は画面1pxごとの
+ * テクスチャ縦方向の進み量を表す.
  */
 static void	calc_tex_coords(t_column *col, const t_ray *ray,
 		const t_img *tex, int line_height)
@@ -74,6 +85,7 @@ static char	*pixel_ptr(t_img *img, int x, int y)
  * @brief 壁部分だけをフレームバッファに描画する
  *
  * 背景は`render_frame.c`側で先に塗りつぶされている前提とする。
+ * そのため,この関数は天井や床を描かず,壁区間だけをサンプリング結果で上書きする.
  */
 static void	draw_wall_range(t_img *frame, t_column *col, const t_img *tex)
 {
