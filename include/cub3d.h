@@ -1,6 +1,12 @@
 /**
  * @file cub3d.h
  * @brief cub3Dの中心的な型定義 (画像・ベクトル・プレイヤー・レイキャスト・ゲーム状態)
+ *
+ * @details
+ * 本ヘッダは,複数モジュールで共有される中核データ構造を定義する.
+ * 2次元ベクトル,画像,プレイヤー,レイキャスト途中状態,ゲーム全体状態を
+ * 一元的にまとめることで,関数シグネチャと所有関係を読みやすくしている.
+ * 詳しいアーキテクチャ説明とDOT図は`docs/mainpage.dox`側に集約する.
  */
 #ifndef CUB3D_H
 #define CUB3D_H
@@ -115,7 +121,6 @@ typedef struct s_assets
 }	t_assets;
 
 /**
- * @enum e_hit_side
  * @brief DDAでどちらの軸の壁に衝突したかを表す
  */
 typedef enum e_hit_side

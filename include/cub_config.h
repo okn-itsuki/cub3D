@@ -1,6 +1,12 @@
 /**
  * @file cub_config.h
  * @brief .cubファイルのパース結果を保持する型定義
+ *
+ * @details
+ * `t_config`は起動前に確定する静的な設定を表す.
+ * 実行中に頻繁に変化する状態は保持せず,テクスチャパス,色,マップ,スポーン位置だけを持つ.
+ * 実行時のマップ参照は,行長が不揃いでも安全に扱えるよう
+ * `map_cell_at()`/`map_is_solid()`経由に統一している.
  */
 #ifndef CUB_CONFIG_H
 #define CUB_CONFIG_H
@@ -26,7 +32,6 @@ typedef struct s_rgb
 }	t_rgb;
 
 /**
- * @enum e_dir
  * @brief プレイヤーの初期向きや方位を表す列挙体
  */
 typedef enum e_dir
@@ -39,7 +44,6 @@ typedef enum e_dir
 }t_dir;
 
 /**
- * @enum e_tex_id
  * @brief 壁テクスチャIDを表す列挙体
  *
  * 四方向の壁テクスチャを配列indexで一元管理する。
@@ -107,12 +111,8 @@ typedef struct s_config
 	t_spawn		spawn;			/**< プレイヤーの初期位置と向き */
 }	t_config;
 
-// map 1cell を安全に参照する。
-// - 範囲外 / 行外 / NULL 行は `' '` を返す
 char	map_cell_at(const t_map *map, int x, int y);
 
-// 移動不能 cell かどうかを返す。
-// - `'1'` と void (`' '`) は壁として扱う
 bool	map_is_solid(const t_map *map, int x, int y);
 
 #endif
