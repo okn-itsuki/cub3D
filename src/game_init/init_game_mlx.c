@@ -1,16 +1,18 @@
+/**
+ * @file init_game_mlx.c
+ * @brief MLX本体・ウィンドウ・フレームバッファの初期化と破棄
+ */
 #include "game_init.h"
 #include "libft.h"
 #include <stdlib.h>
 
-// 何する関数か:
-// - MLX 初期化が所有する実行時フィールドだけを 0 初期化する。
-// 参照でいじった値:
-// - `game_state->mlx` を 0 で埋める。
-// - `game_state->render.frame` を 0 で埋める。
-// - `game_state->assets` を 0 で埋める。
-// - `game_state->init_mask` から MLX/texture 関連 bit を落とす。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief MLX関連の実行時フィールドをゼロ初期化する
+ *
+ * mlx, frame, assetsをゼロクリアし、init_maskからMLX/texture関連ビットを落とす。
+ *
+ * @param[in,out] game_state ゼロ初期化するゲーム状態
+ */
 static void	reset_game_runtime_resources(t_game *game_state)
 {
 	ft_bzero(&game_state->mlx, sizeof(game_state->mlx));
@@ -20,17 +22,14 @@ static void	reset_game_runtime_resources(t_game *game_state)
 			| GAME_FRAME_READY | GAME_WALL_TEXTURES_READY);
 }
 
-// 何する関数か:
-// - `init_mask` を見て、初期化済みのゲーム資源を逆順で一括開放する。
-// 参照でいじった値:
-// - `game_state->assets.wall[]` を必要なら破棄して空状態へ戻す。
-// - `game_state->render.frame.img` を破棄して `NULL` に戻す。
-// - `game_state->render.frame.addr` を `NULL` に戻す。
-// - `game_state->mlx.win` を破棄して `NULL` に戻す。
-// - `game_state->mlx.mlx` を破棄して `NULL` に戻す。
-// - `game_state->init_mask` から破棄済み bit を落とす。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 初期化済みのゲーム資源を逆順で一括解放する
+ *
+ * init_maskを参照し、初期化済みの資源だけを安全に破棄する。
+ * 解放順: テクスチャ -> フレーム -> ウィンドウ -> MLX本体
+ *
+ * @param[in,out] game_state 解放対象のゲーム状態 (NULLなら何もしない)
+ */
 void	destroy_game_resources(t_game *game_state)
 {
 	if (game_state == NULL)
@@ -64,14 +63,13 @@ void	destroy_game_resources(t_game *game_state)
 	}
 }
 
-// 何する関数か:
-// - MLX本体を起動する。
-// 参照でいじった値:
-// - `game_state->mlx.mlx` に `mlx_init()` の返り値を入れる。
-// - `game_state->init_mask` に MLX 初期化済み bit を立てる。
-// 戻り値の意味:
-// - `true`: MLX本体の起動に成功した。
-// - `false`: MLX本体の起動に失敗した。
+/**
+ * @brief MLX本体 (mlx_init) を起動する
+ *
+ * @param[in,out] game_state MLXインスタンスを格納するゲーム状態
+ * @retval true  MLX本体の起動に成功
+ * @retval false MLX本体の起動に失敗
+ */
 static bool	init_mlx_instance(t_game *game_state)
 {
 	game_state->mlx.mlx = mlx_init();
@@ -81,14 +79,13 @@ static bool	init_mlx_instance(t_game *game_state)
 	return (true);
 }
 
-// 何する関数か:
-// - 描画先の window を作る。
-// 参照でいじった値:
-// - `game_state->mlx.win` に `mlx_new_window()` の返り値を入れる。
-// - `game_state->init_mask` に window 初期化済み bit を立てる。
-// 戻り値の意味:
-// - `true`: window の作成に成功した。
-// - `false`: window の作成に失敗した。
+/**
+ * @brief 描画先のウィンドウを作成する
+ *
+ * @param[in,out] game_state ウィンドウを格納するゲーム状態
+ * @retval true  ウィンドウの作成に成功
+ * @retval false ウィンドウの作成に失敗
+ */
 static bool	init_game_window(t_game *game_state)
 {
 	game_state->mlx.win = mlx_new_window(game_state->mlx.mlx,
@@ -99,16 +96,15 @@ static bool	init_game_window(t_game *game_state)
 	return (true);
 }
 
-// 何する関数か:
-// - off-screen描画用の frame画像を作り、pixel書き込み情報を設定する。
-// 参照でいじった値:
-// - `game_state->render.frame.img` に画像本体を入れる。
-// - `game_state->render.frame.addr`, `bpp`, `line_len`, `endian` を設定する。
-// - `game_state->render.frame.width`, `height` を画面サイズで設定する。
-// - `game_state->init_mask` に frame 初期化済み bit を立てる。
-// 戻り値の意味:
-// - `true`: frame画像の作成と pixel 情報の取得に成功した。
-// - `false`: 途中で失敗した。
+/**
+ * @brief オフスクリーン描画用のフレームバッファを作成する
+ *
+ * MLX画像を生成し、ピクセル直接書き込み用のアドレス情報を取得する。
+ *
+ * @param[in,out] game_state フレームバッファを格納するゲーム状態
+ * @retval true  フレームバッファの作成とピクセル情報の取得に成功
+ * @retval false 途中で失敗
+ */
 static bool	init_frame_buffer(t_game *game_state)
 {
 	t_img	*frame_buffer;
@@ -127,18 +123,15 @@ static bool	init_frame_buffer(t_game *game_state)
 	return (true);
 }
 
-// 何する関数か:
-// - MLX 関連の実行時フィールドを初期化し、MLX本体, window, frame画像を順に作る。
-// 参照でいじった値:
-// - `game_state->mlx`, `game_state->render.frame`, `game_state->assets` を
-//   初期状態へ戻す。
-// - `game_state->mlx.mlx`, `game_state->mlx.win` を設定する。
-// - `game_state->render.frame` の各項目を設定する。
-// - `game_state->init_mask` に各初期化段階の bit を立てる。
-// - 失敗したら、`init_mask` を見て初期化済み資源だけを一括開放する。
-// 戻り値の意味:
-// - `true`: MLX初期化が最後まで完了した。
-// - `false`: 途中で失敗した。
+/**
+ * @brief MLX本体・ウィンドウ・フレームバッファを順に初期化する
+ *
+ * 途中で失敗した場合、初期化済み資源を一括解放してfalseを返す。
+ *
+ * @param[in,out] game_state 初期化対象のゲーム状態 (NULLなら即false)
+ * @retval true  MLX初期化が最後まで完了
+ * @retval false 途中で失敗 (資源は解放済み)
+ */
 bool	init_game_mlx(t_game *game_state)
 {
 	if (game_state == NULL)

@@ -1,3 +1,7 @@
+/**
+ * @file ray_casting.h
+ * @brief レイキャスト・描画・プレイヤー更新・ゲームループの関数宣言
+ */
 #ifndef RAY_CASTING_H
 #define RAY_CASTING_H
 

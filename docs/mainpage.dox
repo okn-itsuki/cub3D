@@ -1,0 +1,368 @@
+/**
+ * @mainpage cub3D アーキテクチャ概要
+ *
+ * @section sec_overview 全体構成
+ *
+ * cub3Dは `.cub` 設定ファイルを読み込み、DDAレイキャスティングで
+ * Wolfenstein 3D風の疑似3D描画を行うプロジェクトです。
+ *
+ * @subsection sec_struct_ownership 構造体の所有関係
+ *
+ * t_game がすべてのゲーム状態を所有するルート構造体です。
+ *
+ * @dot
+ * digraph ownership {
+ *   rankdir=TB;
+ *   node [shape=record, fontname="monospace", fontsize=10];
+ *   edge [arrowhead=odiamond, dir=back];
+ *
+ *   game [label="t_game\n(ルート構造体)", style=bold];
+ *   config [label="t_config\n(.cubパース結果)"];
+ *   mlx [label="t_mlx\n(MLX + ウィンドウ)"];
+ *   assets [label="t_assets\n(テクスチャ画像)"];
+ *   render [label="t_render\n(描画作業領域)"];
+ *   player [label="t_player\n(プレイヤー状態)"];
+ *   input [label="t_input\n(入力状態)"];
+ *   clock [label="t_frame_clock\n(フレーム時間)"];
+ *
+ *   tex [label="t_tex_path\n(テクスチャパス)"];
+ *   rgb_f [label="t_rgb\n(床色)"];
+ *   rgb_c [label="t_rgb\n(天井色)"];
+ *   map [label="t_map\n(マップ grid)"];
+ *   spawn [label="t_spawn\n(初期位置)"];
+ *
+ *   texture [label="t_texture × 4\n(壁テクスチャ)"];
+ *   img_tex [label="t_img\n(テクスチャ画像)"];
+ *
+ *   frame [label="t_img\n(フレームバッファ)"];
+ *   ray [label="t_ray\n(レイキャスト)"];
+ *   column [label="t_column\n(列描画)"];
+ *
+ *   game -> config;
+ *   game -> mlx;
+ *   game -> assets;
+ *   game -> render;
+ *   game -> player;
+ *   game -> input;
+ *   game -> clock;
+ *
+ *   config -> tex;
+ *   config -> rgb_f;
+ *   config -> rgb_c;
+ *   config -> map;
+ *   config -> spawn;
+ *
+ *   assets -> texture;
+ *   texture -> img_tex;
+ *
+ *   render -> frame;
+ *   render -> ray;
+ *   render -> column;
+ * }
+ * @enddot
+ *
+ * ---
+ *
+ * @section sec_lifecycle リソースライフサイクル
+ *
+ * @subsection sec_init 初期化フロー
+ *
+ * 初期化は段階的に進み、各段階で init_mask のビットを立てる。
+ * 途中で失敗した場合、立っているビットを見て確保済みの資源だけを解放する。
+ *
+ * @dot
+ * digraph init_flow {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   start [label="開始", shape=ellipse];
+ *   parse [label="parse_cub()\n.cubファイルをパース\n→ t_config に格納"];
+ *   init_mlx [label="init_mlx_instance()\nMLX本体を起動\n→ GAME_MLX_READY"];
+ *   init_win [label="init_game_window()\nウィンドウを作成\n→ GAME_WINDOW_READY"];
+ *   init_frame [label="init_frame_buffer()\nフレームバッファ作成\n→ GAME_FRAME_READY"];
+ *   init_tex [label="init_game_wall_textures()\nXPMテクスチャ読込\n→ GAME_WALL_TEXTURES_READY"];
+ *   init_player [label="init_player()\nプレイヤー初期化\n(位置・方向・速度)"];
+ *   init_input [label="init_input()\n入力状態を初期化"];
+ *   hooks [label="register_hooks()\nイベントフック登録"];
+ *   loop [label="mlx_loop()\nゲームループ開始", shape=ellipse];
+ *   fail [label="destroy_game_resources()\n確保済み資源を解放", style=dashed];
+ *
+ *   start -> parse;
+ *   parse -> init_mlx;
+ *   init_mlx -> init_win [label="成功"];
+ *   init_win -> init_frame [label="成功"];
+ *   init_frame -> init_tex [label="成功"];
+ *   init_tex -> init_player [label="成功"];
+ *   init_player -> init_input;
+ *   init_input -> hooks;
+ *   hooks -> loop;
+ *
+ *   init_mlx -> fail [label="失敗", style=dashed, color=red, fontcolor=red];
+ *   init_win -> fail [label="失敗", style=dashed, color=red, fontcolor=red];
+ *   init_frame -> fail [label="失敗", style=dashed, color=red, fontcolor=red];
+ *   init_tex -> fail [label="失敗", style=dashed, color=red, fontcolor=red];
+ * }
+ * @enddot
+ *
+ * @subsection sec_destroy 解放フロー
+ *
+ * 解放は初期化の逆順で行う。init_mask のビットを見て、
+ * 確保済みのものだけを解放する (部分初期化でも安全)。
+ *
+ * @dot
+ * digraph destroy_flow {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *
+ *   start [label="destroy_game_resources()\n呼び出し", shape=ellipse];
+ *   check_tex [label="GAME_WALL_TEXTURES_READY?\n壁テクスチャ", shape=diamond];
+ *   free_tex [label="destroy_texture_assets()\nテクスチャ画像を破棄"];
+ *   check_frame [label="GAME_FRAME_READY?\nフレームバッファ", shape=diamond];
+ *   free_frame [label="mlx_destroy_image()\nフレーム画像を破棄"];
+ *   check_win [label="GAME_WINDOW_READY?\nウィンドウ", shape=diamond];
+ *   free_win [label="mlx_destroy_window()\nウィンドウを破棄"];
+ *   check_mlx [label="GAME_MLX_READY?\nMLX本体", shape=diamond];
+ *   free_mlx [label="free(mlx)\nMLX本体を解放"];
+ *   done [label="完了", shape=ellipse];
+ *
+ *   start -> check_tex;
+ *   check_tex -> free_tex [label="YES"];
+ *   check_tex -> check_frame [label="NO"];
+ *   free_tex -> check_frame;
+ *   check_frame -> free_frame [label="YES"];
+ *   check_frame -> check_win [label="NO"];
+ *   free_frame -> check_win;
+ *   check_win -> free_win [label="YES"];
+ *   check_win -> check_mlx [label="NO"];
+ *   free_win -> check_mlx;
+ *   check_mlx -> free_mlx [label="YES"];
+ *   check_mlx -> done [label="NO"];
+ *   free_mlx -> done;
+ * }
+ * @enddot
+ *
+ * ---
+ *
+ * @section sec_gameloop ゲームループ
+ *
+ * mlx_loop_hook に登録された game_loop_tick() が毎フレーム呼ばれる。
+ *
+ * @dot
+ * digraph game_loop {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   entry [label="game_loop_tick()", shape=ellipse];
+ *   check_quit [label="quit || !running ?", shape=diamond];
+ *   cleanup [label="資源解放 → exit(0)"];
+ *   get_time [label="get_current_time_us()\n現在時刻を取得"];
+ *   calc_dt [label="デルタタイム算出\n(最大 0.1秒 にクランプ)"];
+ *   update [label="update_player()\n回転・移動・壁衝突判定"];
+ *   render [label="render_frame()\n全列レイキャスト + 描画"];
+ *   put_img [label="mlx_put_image_to_window()\nフレームをウィンドウに転送"];
+ *   done [label="return true\n→ 次フレームへ", shape=ellipse];
+ *
+ *   entry -> check_quit;
+ *   check_quit -> cleanup [label="YES", color=red, fontcolor=red];
+ *   check_quit -> get_time [label="NO"];
+ *   get_time -> calc_dt;
+ *   calc_dt -> update;
+ *   update -> render;
+ *   render -> put_img;
+ *   put_img -> done;
+ * }
+ * @enddot
+ *
+ * ---
+ *
+ * @section sec_raycast レイキャスティング パイプライン
+ *
+ * 各画面列 (0 〜 WIN_W-1) に対して以下の4段階を実行する。
+ *
+ * @dot
+ * digraph raycast_pipeline {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   subgraph cluster_cast {
+ *     label="cast_ray()";
+ *     style=rounded;
+ *     color=blue;
+ *     fontcolor=blue;
+ *
+ *     step1 [label="init_ray_direction()\nカメラ平面座標から\nレイ方向を計算"];
+ *     step2 [label="init_dda_step()\ndelta_dist / step /\n初期 side_dist を計算"];
+ *     step3 [label="run_dda()\nグリッドを1セルずつ\n進めて壁を検出"];
+ *     step4 [label="calc_wall_dist()\n魚眼補正済み壁距離\n+ 壁面衝突位置を計算"];
+ *
+ *     step1 -> step2 -> step3 -> step4;
+ *   }
+ *
+ *   subgraph cluster_render {
+ *     label="render_column()";
+ *     style=rounded;
+ *     color=green4;
+ *     fontcolor=green4;
+ *
+ *     step5 [label="calc_draw_range()\n壁距離 → 描画範囲\n(draw_start / draw_end)"];
+ *     step6 [label="choose_texture()\n衝突面+方向 →\nN/S/E/W テクスチャ選択"];
+ *     step7 [label="calc_tex_coords()\nテクスチャ U/V 座標\n+ ステップ量を計算"];
+ *     step8 [label="draw_column_stripe()\n天井 → 壁 → 床\nの順にピクセル書込"];
+ *
+ *     step5 -> step6 -> step7 -> step8;
+ *   }
+ *
+ *   step4 -> step5;
+ * }
+ * @enddot
+ *
+ * @subsection sec_dda_detail DDAアルゴリズム詳細
+ *
+ * DDA (Digital Differential Analyzer) はグリッド上で
+ * レイが通過するセルを効率的に列挙するアルゴリズム。
+ *
+ * @dot
+ * digraph dda_detail {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   start [label="DDA ループ開始", shape=ellipse];
+ *   compare [label="side_dist.x < side_dist.y ?", shape=diamond];
+ *
+ *   step_x [label="X軸方向に1セル進める\nside_dist.x += delta_dist.x\nmap.x += step.x\nhit_side = HIT_X"];
+ *   step_y [label="Y軸方向に1セル進める\nside_dist.y += delta_dist.y\nmap.y += step.y\nhit_side = HIT_Y"];
+ *
+ *   check_bounds [label="マップ範囲外?", shape=diamond];
+ *   check_wall [label="壁セル '1' ?", shape=diamond];
+ *   hit [label="壁に衝突 → ループ終了", shape=ellipse];
+ *
+ *   start -> compare;
+ *   compare -> step_x [label="YES\n(X境界が近い)"];
+ *   compare -> step_y [label="NO\n(Y境界が近い)"];
+ *   step_x -> check_bounds;
+ *   step_y -> check_bounds;
+ *   check_bounds -> hit [label="YES\n(範囲外)"];
+ *   check_bounds -> check_wall [label="NO"];
+ *   check_wall -> hit [label="YES"];
+ *   check_wall -> compare [label="NO\n(次のセルへ)"];
+ * }
+ * @enddot
+ *
+ * ---
+ *
+ * @section sec_player プレイヤー更新フロー
+ *
+ * @dot
+ * digraph player_update {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   entry [label="update_player()", shape=ellipse];
+ *
+ *   rot_l [label="左回転?\nrotate_player(-rot_speed * dt)", shape=diamond];
+ *   rot_r [label="右回転?\nrotate_player(+rot_speed * dt)", shape=diamond];
+ *
+ *   calc_delta [label="移動量 delta を計算\n前進/後退: dir方向\n左右移動: plane方向(正規化)"];
+ *
+ *   check_move [label="delta != 0 ?", shape=diamond];
+ *   collision [label="move_with_collision()\nX軸・Y軸を独立に衝突判定\n→ 壁沿いスライド移動"];
+ *   done [label="完了", shape=ellipse];
+ *
+ *   entry -> rot_l;
+ *   rot_l -> rot_r;
+ *   rot_r -> calc_delta;
+ *   calc_delta -> check_move;
+ *   check_move -> collision [label="YES"];
+ *   check_move -> done [label="NO"];
+ *   collision -> done;
+ * }
+ * @enddot
+ *
+ * @subsection sec_collision 壁衝突判定の仕組み
+ *
+ * X軸とY軸を独立に判定することで、壁に対して斜めに移動した場合でも
+ * 壁沿いにスライドする動きを実現する。
+ *
+ * @dot
+ * digraph collision {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   start [label="move_with_collision()", shape=ellipse];
+ *
+ *   try_x [label="X軸: new_x + margin が壁でない?", shape=diamond];
+ *   apply_x [label="pos.x = new_x\n(X方向の移動を適用)"];
+ *   skip_x [label="X方向はブロック\n(pos.x 変更なし)"];
+ *
+ *   try_y [label="Y軸: new_y + margin が壁でない?", shape=diamond];
+ *   apply_y [label="pos.y = new_y\n(Y方向の移動を適用)"];
+ *   skip_y [label="Y方向はブロック\n(pos.y 変更なし)"];
+ *
+ *   done [label="完了\n→ 結果的に壁沿いスライド", shape=ellipse];
+ *
+ *   start -> try_x;
+ *   try_x -> apply_x [label="通行可"];
+ *   try_x -> skip_x [label="壁"];
+ *   apply_x -> try_y;
+ *   skip_x -> try_y;
+ *   try_y -> apply_y [label="通行可"];
+ *   try_y -> skip_y [label="壁"];
+ *   apply_y -> done;
+ *   skip_y -> done;
+ * }
+ * @enddot
+ *
+ * ---
+ *
+ * @section sec_input 入力処理フロー
+ *
+ * @dot
+ * digraph input_flow {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   subgraph cluster_events {
+ *     label="MLXイベント";
+ *     style=rounded;
+ *     color=gray;
+ *
+ *     press [label="KeyPress\nイベント"];
+ *     release [label="KeyRelease\nイベント"];
+ *     close_ev [label="DestroyNotify\nイベント"];
+ *   }
+ *
+ *   subgraph cluster_handlers {
+ *     label="ハンドラ";
+ *     style=rounded;
+ *     color=blue;
+ *
+ *     h_press [label="handle_key_press()\nフラグを true に"];
+ *     h_release [label="handle_key_release()\nフラグを false に"];
+ *     h_close [label="handle_close()\nrunning = false"];
+ *   }
+ *
+ *   input_state [label="t_input\n(フレーム間で保持)", shape=record];
+ *   loop [label="game_loop_tick()\nが毎フレーム参照"];
+ *
+ *   press -> h_press;
+ *   release -> h_release;
+ *   close_ev -> h_close;
+ *
+ *   h_press -> input_state;
+ *   h_release -> input_state;
+ *   h_close -> input_state [label="quit経由"];
+ *
+ *   input_state -> loop;
+ * }
+ * @enddot
+ *
+ * @note ESCキーの quit フラグは一方通行 (trueになったら戻らない)。
+ *       KeyReleaseでは操作しない。
+ */

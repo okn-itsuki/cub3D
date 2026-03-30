@@ -1,12 +1,19 @@
+/**
+ * @file render_column.c
+ * @brief 壁1列分の描画処理 (描画範囲計算・テクスチャ選択・ピクセル書き込み)
+ */
 #include "ray_casting.h"
 #include "game_config.h"
 
-// 何する関数か:
-// - 壁の垂直距離から描画範囲 (draw_start, draw_end) を計算する。
-// 参照でいじった値:
-// - `col->draw_start`, `col->draw_end` を設定する。
-// 戻り値の意味:
-// - 壁1列の高さ (line_height) を返す。テクスチャ座標計算に使う。
+/**
+ * @brief 壁の垂直距離から描画範囲 (draw_start, draw_end) を計算する
+ *
+ * 壁の高さを画面中央に配置し、画面外にはみ出す部分をクランプする。
+ *
+ * @param[out] col            描画範囲の書き込み先
+ * @param[in]  perp_wall_dist 魚眼補正済みの壁までの垂直距離
+ * @return 壁1列の高さ (line_height)。テクスチャ座標計算に使用する。
+ */
 static int	calc_draw_range(t_column *col, double perp_wall_dist)
 {
 	int	line_height;
@@ -21,12 +28,15 @@ static int	calc_draw_range(t_column *col, double perp_wall_dist)
 	return (line_height);
 }
 
-// 何する関数か:
-// - hit_side と ray 方向からどの壁テクスチャを使うか決める。
-// 参照でいじった値:
-// - `col->tex_id` を設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 衝突面とレイ方向から使用する壁テクスチャを決定する
+ *
+ * HIT_X: レイが西向き→西壁、東向き→東壁。
+ * HIT_Y: レイが北向き→北壁、南向き→南壁。
+ *
+ * @param[out] col 選択されたテクスチャIDの書き込み先
+ * @param[in]  ray レイキャスト結果 (hit_sideとray_dirを参照)
+ */
 static void	choose_texture(t_column *col, const t_ray *ray)
 {
 	if (ray->hit_side == HIT_X)
@@ -45,12 +55,17 @@ static void	choose_texture(t_column *col, const t_ray *ray)
 	}
 }
 
-// 何する関数か:
-// - テクスチャの x 座標、ステップ量、初期 y 位置を計算する。
-// 参照でいじった値:
-// - `col->tex_x`, `col->tex_step`, `col->tex_pos` を設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief テクスチャのx座標・ステップ量・初期y位置を計算する
+ *
+ * wall_xからテクスチャU座標を求め、衝突面とレイ方向に応じて
+ * 左右反転を行う。ステップ量はテクスチャ高さと壁描画高さの比率。
+ *
+ * @param[in,out] col    テクスチャ座標の書き込み先
+ * @param[in]     ray    レイキャスト結果 (wall_x/hit_side/ray_dirを参照)
+ * @param[in]     tex    使用するテクスチャ画像
+ * @param[in]     line_h 壁1列の描画高さ
+ */
 static void	calc_tex_coords(t_column *col, const t_ray *ray,
 		const t_img *tex, int line_h)
 {
@@ -66,13 +81,17 @@ static void	calc_tex_coords(t_column *col, const t_ray *ray,
 		* col->tex_step;
 }
 
-// 何する関数か:
-// - 1列の天井→壁→床を1パスで frame バッファに書き込む。
-// 参照でいじった値:
-// - `frame->addr` の該当列ピクセルを書き換える。
-// - `col->tex_pos` をピクセルごとに進める。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 1列の天井・壁・床をフレームバッファに1パスで書き込む
+ *
+ * y=0～draw_start: 天井色、draw_start～draw_end: テクスチャ、
+ * draw_end～WIN_H: 床色の順でピクセルを書き込む。
+ *
+ * @param[in,out] frame  書き込み先のフレームバッファ
+ * @param[in,out] col    描画パラメータ (tex_posがピクセルごとに進む)
+ * @param[in]     tex    壁テクスチャ画像
+ * @param[in]     colors colors[0]=天井色, colors[1]=床色
+ */
 static void	draw_column_stripe(t_img *frame, t_column *col,
 		const t_img *tex, uint32_t *colors)
 {
@@ -109,13 +128,14 @@ static void	draw_column_stripe(t_img *frame, t_column *col,
 	}
 }
 
-// 何する関数か:
-// - ray の結果から1列を天井/壁/床まとめて frame に描画する。
-// 参照でいじった値:
-// - `render->column` の全フィールドを設定する。
-// - `render->frame` の該当ピクセルを書き換える。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief レイキャスト結果から1列を天井/壁/床まとめてフレームに描画する
+ *
+ * @param[in,out] render      描画作業領域 (ray結果を参照し、frame/columnを更新)
+ * @param[in]     assets      壁テクスチャアセット
+ * @param[in]     ceil_color  天井色 (RGB32)
+ * @param[in]     floor_color 床色 (RGB32)
+ */
 void	render_column(t_render *render, const t_assets *assets,
 		uint32_t ceil_color, uint32_t floor_color)
 {

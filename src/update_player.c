@@ -1,14 +1,19 @@
+/**
+ * @file update_player.c
+ * @brief プレイヤーの回転・移動・壁衝突判定
+ */
 #include "ray_casting.h"
 #include "game_config.h"
 #include <math.h>
 
-// 何する関数か:
-// - `dir` と `plane` を `angle`[rad] だけ回転行列で回す。
-// 参照でいじった値:
-// - `player->dir` を回転後の方向ベクトルに更新する。
-// - `player->plane` を回転後のカメラ平面ベクトルに更新する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief プレイヤーの方向ベクトルとカメラ平面を回転する
+ *
+ * 2D回転行列を適用し、dirとplaneを同時に回転させる。
+ *
+ * @param[in,out] player 回転対象のプレイヤー (dir/planeを更新)
+ * @param[in]     angle  回転角 [rad] (正=右回り、負=左回り)
+ */
 static void	rotate_player(t_player *player, double angle)
 {
 	double	cos_a;
@@ -26,13 +31,15 @@ static void	rotate_player(t_player *player, double angle)
 	player->plane.y = old_plane.x * sin_a + old_plane.y * cos_a;
 }
 
-// 何する関数か:
-// - ワールド座標 `(x, y)` が壁セルかどうかを判定する。
-// 参照でいじった値:
-// - なし。
-// 戻り値の意味:
-// - `true`: 壁または map 範囲外。
-// - `false`: 通行可能。
+/**
+ * @brief ワールド座標が壁セルかどうかを判定する
+ *
+ * @param[in] map マップデータ
+ * @param[in] x   判定するX座標
+ * @param[in] y   判定するY座標
+ * @retval true  壁またはマップ範囲外
+ * @retval false 通行可能
+ */
 static bool	is_wall(const t_map *map, double x, double y)
 {
 	int	ix;
@@ -45,13 +52,16 @@ static bool	is_wall(const t_map *map, double x, double y)
 	return (map->grid[iy][ix] == MAP_WALL_CELL);
 }
 
-// 何する関数か:
-// - `delta` 分だけプレイヤーを移動させる。壁があれば軸ごとにブロックする。
-// 参照でいじった値:
-// - `player->pos` を衝突判定後の座標に更新する。
-//   + X軸・Y軸を独立に判定し、壁沿いスライドを実現する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 壁との衝突判定付きでプレイヤーを移動する
+ *
+ * X軸とY軸を独立に判定することで、壁沿いスライド移動を実現する。
+ * 各軸で移動先+マージン位置が壁でなければ移動を適用する。
+ *
+ * @param[in,out] player 移動するプレイヤー (posを更新)
+ * @param[in]     map    壁判定用のマップデータ
+ * @param[in]     delta  移動量ベクトル
+ */
 static void	move_with_collision(t_player *player, const t_map *map,
 		t_vec2d delta)
 {
@@ -78,13 +88,18 @@ static void	move_with_collision(t_player *player, const t_map *map,
 		player->pos.y = new_y;
 }
 
-// 何する関数か:
-// - 入力状態と delta time からプレイヤーの回転・移動を1フレーム分更新する。
-// 参照でいじった値:
-// - `player->dir`, `player->plane` を回転入力に応じて更新する。
-// - `player->pos` を移動入力に応じて壁衝突判定付きで更新する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 入力状態とデルタタイムからプレイヤーを1フレーム分更新する
+ *
+ * 回転入力 -> 移動入力の順で処理する。
+ * 横移動(strafe)はカメラ平面方向の正規化ベクトルを使用する。
+ * 移動量がゼロでなければ壁衝突判定付きで移動を適用する。
+ *
+ * @param[in,out] player プレイヤー状態 (pos/dir/planeを更新)
+ * @param[in]     input  現在の入力状態
+ * @param[in]     map    壁判定用のマップデータ
+ * @param[in]     dt     前フレームからの経過時間 [sec]
+ */
 void	update_player(t_player *player, const t_input *input,
 		const t_map *map, double dt)
 {

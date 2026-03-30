@@ -10,24 +10,24 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+/**
+ * @file init_config.c
+ * @brief t_configの初期化と破棄
+ */
 #include "libft.h"
 #include "cub_config.h"
 #include <stdlib.h>
 
 static void	init_rgb(t_rgb *rgb);
 
-// 概要 : `t_config`の初期化
-//
-// - テクスチャパス配列をすべてNULLで初期化
-// - 床色(`floor_color`)を未設定状態で初期化
-// - 天井色（`floor_color`）を未設定状態で初期化
-// - `map`本体のポインタを未設定(NULL)にする
-// - `map`の幅を 0 で初期化する
-// - `map`の高さを 0 で初期化する
-// - `spawn`行位置を未設定として -1 にする
-// - `spawn`列位置を未設定として -1 にする
-// - 方角の暫定値をNとする
-
+/**
+ * @brief t_configの全フィールドを未設定状態で初期化する
+ *
+ * テクスチャパスをNULL、色を未設定、マップをNULL/0、
+ * スポーン位置を-1、方角をDIR_UNSETに設定する。
+ *
+ * @param[out] config 初期化する設定構造体
+ */
 void	init_config(t_config *config)
 {
 	int	i;
@@ -48,7 +48,11 @@ void	init_config(t_config *config)
 	config->spawn.dir = DIR_UNSET;
 }
 
-// 概要 : t_rgbの初期化
+/**
+ * @brief t_rgbの全フィールドをゼロ/未設定で初期化する
+ *
+ * @param[out] rgb 初期化するRGB構造体
+ */
 static void	init_rgb(t_rgb *rgb)
 {
 	rgb->r = 0;
@@ -58,13 +62,13 @@ static void	init_rgb(t_rgb *rgb)
 	rgb->is_set = false;
 }
 
-// 何する関数か:
-// - `t_config` が所有する動的メモリ（テクスチャパスと map grid）を解放する。
-// 参照でいじった値:
-// - `config->tex.path[]` を `free` して `NULL` に戻す。
-// - `config->map.grid[]` の各行と配列本体を `free` して `NULL` に戻す。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief t_configが所有する動的メモリを解放する
+ *
+ * テクスチャパス配列とマップgridの各行・配列本体をfreeする。
+ *
+ * @param[in,out] config 解放する設定構造体 (NULLなら何もしない)
+ */
 void	destroy_config(t_config *config)
 {
 	int	i;

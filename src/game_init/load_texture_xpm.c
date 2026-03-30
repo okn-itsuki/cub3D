@@ -1,15 +1,17 @@
+/**
+ * @file load_texture_xpm.c
+ * @brief 壁テクスチャ(XPM)のロード・破棄処理
+ */
 #include "game_init.h"
 #include <stdlib.h>
 
-// 何する関数か:
-// - テクスチャスロットを未ロード状態へ戻し、画像メタ情報を 0 初期化する。
-// 参照でいじった値:
-// - `wall_texture->loaded` を `false` に戻す。
-// - `wall_texture->image.img`, `addr` を `NULL` に戻す。
-// - `wall_texture->image.bpp`, `line_len`, `endian`, `width`, `height`
-//   を `0` に戻す。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief テクスチャスロットを未ロード状態にリセットする
+ *
+ * 画像ポインタをNULL、メタ情報を0、loadedをfalseに戻す。
+ *
+ * @param[out] wall_texture リセット対象のテクスチャスロット
+ */
 static void	reset_texture_slot(t_texture *wall_texture)
 {
 	wall_texture->loaded = false;
@@ -22,13 +24,12 @@ static void	reset_texture_slot(t_texture *wall_texture)
 	wall_texture->image.height = 0;
 }
 
-// 何する関数か:
-// - 既存の MLX 画像があれば破棄し、テクスチャスロットを空状態へ戻す。
-// 参照でいじった値:
-// - `wall_texture->image.img` を必要なら `mlx_destroy_image()` で破棄する。
-// - `wall_texture` 全体を未ロードの空状態へ戻す。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief テクスチャスロットのMLX画像を破棄し、空状態に戻す
+ *
+ * @param[in]     mlx_instance MLXインスタンス
+ * @param[in,out] wall_texture 破棄対象のテクスチャスロット
+ */
 static void	destroy_texture_slot(void *mlx_instance, t_texture *wall_texture)
 {
 	if (wall_texture->image.img != NULL)
@@ -36,12 +37,14 @@ static void	destroy_texture_slot(void *mlx_instance, t_texture *wall_texture)
 	reset_texture_slot(wall_texture);
 }
 
-// 何する関数か:
-// - 読み込み済みの壁テクスチャをすべて破棄し、空状態へ戻す。
-// 参照でいじった値:
-// - `assets->wall[]` の `loaded == true` なスロットを破棄して空状態へ戻す。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief ロード済みの壁テクスチャをすべて破棄する
+ *
+ * loaded == true のスロットだけを対象に破棄し、空状態へ戻す。
+ *
+ * @param[in,out] assets      テクスチャアセット (NULLなら何もしない)
+ * @param[in]     mlx_context MLXコンテキスト (mlxがNULLなら何もしない)
+ */
 void	destroy_texture_assets(t_assets *assets, t_mlx mlx_context){
 	int	texture_index;
 
@@ -55,17 +58,17 @@ void	destroy_texture_assets(t_assets *assets, t_mlx mlx_context){
 	}
 }
 
-// 何する関数か:
-// - XPM ファイル 1 枚を MLX に読み込み、pixel 書き込み情報を取得する。
-// - 途中で失敗したら、画像を破棄してスロットを空状態に戻す。
-// 参照でいじった値:
-// - `wall_texture->image.img` に画像本体を入れる。
-// - `wall_texture->image.addr`, `bpp`, `line_len`, `endian` を設定する。
-// - `wall_texture->image.width`, `height` を画像サイズで設定する。
-// - `wall_texture->loaded` をロード成功時に `true` にする。
-// 戻り値の意味:
-// - `true`: XPM 読み込みと pixel 情報の取得に成功した。
-// - `false`: 引数不正または途中の MLX 呼び出しに失敗した。
+/**
+ * @brief XPMファイル1枚をMLXに読み込み、ピクセル情報を取得する
+ *
+ * 途中で失敗した場合、画像を破棄してスロットを空状態に戻す。
+ *
+ * @param[in,out] wall_texture 読み込み先のテクスチャスロット
+ * @param[in]     mlx_instance MLXインスタンス
+ * @param[in]     texture_path XPMファイルのパス
+ * @retval true  XPM読み込みとピクセル情報の取得に成功
+ * @retval false 引数不正またはMLX呼び出しに失敗
+ */
 static bool	load_wall_texture(t_texture *wall_texture, void *mlx_instance,char *texture_path){
 	char	*pixel_addr;
 
@@ -85,15 +88,17 @@ static bool	load_wall_texture(t_texture *wall_texture, void *mlx_instance,char *
 	return true;
 }
 
-// 何する関数か:
-// - 四方向の壁テクスチャを順に読み込み、`assets->wall[]` に設定する。
-// - 途中で失敗したら、先に読み込めていた画像もまとめて破棄して戻る。
-// 参照でいじった値:
-// - `assets->wall[]` の各スロットに画像本体と pixel 情報を設定する。
-// - 読み込みに失敗したら、`assets->wall[]` 全体を空状態へ戻す。
-// 戻り値の意味:
-// - `true`: 必要な壁テクスチャをすべて読み込めた。
-// - `false`: 引数不正またはどれか 1 枚でも読み込みに失敗した。
+/**
+ * @brief 四方向の壁テクスチャを順にロードする
+ *
+ * 途中で1枚でも失敗した場合、ロード済みの画像もまとめて破棄する。
+ *
+ * @param[in,out] assets        テクスチャの格納先
+ * @param[in]     texture_paths 四方向のXPMファイルパス
+ * @param[in]     mlx_context   MLXコンテキスト
+ * @retval true  全テクスチャのロードに成功
+ * @retval false 引数不正またはいずれかのロードに失敗
+ */
 static bool	load_all_wall_textures(t_assets *assets, t_tex_path texture_paths,t_mlx mlx_context){
 	int	texture_index;
 
@@ -111,14 +116,14 @@ static bool	load_all_wall_textures(t_assets *assets, t_tex_path texture_paths,t_
 	return true;
 }
 
-// 何する関数か:
-// - `t_game` に属する壁テクスチャを読み込み、成功時に init mask を更新する。
-// 参照でいじった値:
-// - `game_state->assets.wall[]` に画像本体と pixel 情報を設定する。
-// - `game_state->init_mask` の `GAME_WALL_TEXTURES_READY` bit を更新する。
-// 戻り値の意味:
-// - `true`: 壁テクスチャの読み込みが最後まで成功した。
-// - `false`: 引数不正または読み込み途中で失敗した。
+/**
+ * @brief ゲーム状態の壁テクスチャをロードし、init_maskを更新する
+ *
+ * @param[in,out] game_state    テクスチャを格納するゲーム状態
+ * @param[in]     texture_paths 四方向のXPMファイルパス
+ * @retval true  壁テクスチャのロードが最後まで成功
+ * @retval false 引数不正またはロード途中で失敗
+ */
 bool	init_game_wall_textures(t_game *game_state, t_tex_path texture_paths){
 	if (game_state == NULL || game_state->mlx.mlx == NULL)
 		return false;

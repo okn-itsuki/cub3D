@@ -1,13 +1,21 @@
+/**
+ * @file cast_ray.c
+ * @brief DDAアルゴリズムによるレイキャスト処理
+ */
 #include "ray_casting.h"
 #include "game_config.h"
 #include <math.h>
 
-// 何する関数か:
-// - 画面列 `col` に対する ray の方向と初期 map cell を計算する。
-// 参照でいじった値:
-// - `ray->column`, `ray->camera_x`, `ray->ray_dir`, `ray->map` を設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 画面列に対するレイの方向と初期マップセルを計算する
+ *
+ * カメラ平面上の正規化座標からレイ方向を求め、
+ * プレイヤー位置から初期マップセルを設定する。
+ *
+ * @param[out] ray    計算結果の書き込み先
+ * @param[in]  player プレイヤーの位置と向き
+ * @param[in]  col    画面列 (0 <= col < WIN_W)
+ */
 static void	init_ray_direction(t_ray *ray, const t_player *player, int col)
 {
 	const double	camera_x_step = CAMERA_X_SCALE / (double)(WIN_W - 1);
@@ -20,12 +28,16 @@ static void	init_ray_direction(t_ray *ray, const t_player *player, int col)
 	ray->map.y = (int)player->pos.y;
 }
 
-// 何する関数か:
-// - DDA に必要な `delta_dist`, `step`, 初期 `side_dist` を計算する。
-// 参照でいじった値:
-// - `ray->delta_dist`, `ray->step`, `ray->side_dist` を設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief DDAに必要なdelta_dist・step・初期side_distを計算する
+ *
+ * delta_dist: 各軸方向に1セル進むのに必要な距離。
+ * step: 各軸の進行方向 (-1 or +1)。
+ * side_dist: 現在位置から最初のグリッド境界までの距離。
+ *
+ * @param[in,out] ray    DDAパラメータの書き込み先
+ * @param[in]     player プレイヤーの位置
+ */
 static void	init_dda_step(t_ray *ray, const t_player *player)
 {
 	ray->delta_dist.x = (ray->ray_dir.x == 0)
@@ -58,12 +70,15 @@ static void	init_dda_step(t_ray *ray, const t_player *player)
 	}
 }
 
-// 何する関数か:
-// - DDA ループで grid を1セルずつ進み、壁 '1' に衝突するまで繰り返す。
-// 参照でいじった値:
-// - `ray->side_dist`, `ray->map`, `ray->hit_side` を更新する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief DDAループでグリッドを1セルずつ進み、壁に衝突するまで繰り返す
+ *
+ * side_distが小さい方の軸を選んで1セル進める。
+ * マップ範囲外に出るか壁セル('1')に到達したら停止する。
+ *
+ * @param[in,out] ray DDA状態 (side_dist/map/hit_sideを更新)
+ * @param[in]     map マップデータ (境界チェックと壁判定に使用)
+ */
 static void	run_dda(t_ray *ray, const t_map *map)
 {
 	while (1)
@@ -88,12 +103,16 @@ static void	run_dda(t_ray *ray, const t_map *map)
 	}
 }
 
-// 何する関数か:
-// - 魚眼補正済みの壁までの垂直距離と壁面上の衝突位置を計算する。
-// 参照でいじった値:
-// - `ray->perp_wall_dist`, `ray->wall_x` を設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 魚眼補正済みの壁距離と壁面上の衝突位置を計算する
+ *
+ * perp_wall_dist: カメラ平面に垂直な壁までの距離 (魚眼補正済み)。
+ * wall_x: 衝突位置の壁面上での小数部 (0.0 <= wall_x < 1.0)。
+ * テクスチャのU座標として使用する。
+ *
+ * @param[in,out] ray    壁距離と衝突位置の書き込み先
+ * @param[in]     player プレイヤーの位置
+ */
 static void	calc_wall_dist(t_ray *ray, const t_player *player)
 {
 	if (ray->hit_side == HIT_X)
@@ -115,12 +134,17 @@ static void	calc_wall_dist(t_ray *ray, const t_player *player)
 	ray->wall_x = ray->wall_x - floor(ray->wall_x);
 }
 
-// 何する関数か:
-// - 画面列 `col` に対して DDA レイキャストを実行し、結果を `ray` に書き込む。
-// 参照でいじった値:
-// - `ray` の全フィールドを設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 指定画面列に対してDDAレイキャストを実行する
+ *
+ * レイ方向の初期化 -> DDAパラメータ設定 -> DDAループ -> 壁距離計算
+ * の4ステップで、1列分のレイキャスト結果をrayに書き込む。
+ *
+ * @param[out] ray    レイキャスト結果の書き込み先
+ * @param[in]  player プレイヤーの位置と向き
+ * @param[in]  map    マップデータ
+ * @param[in]  col    画面列 (0 <= col < WIN_W)
+ */
 void	cast_ray(t_ray *ray, const t_player *player, const t_map *map,
 		int col)
 {

@@ -1,12 +1,16 @@
+/**
+ * @file init_player.c
+ * @brief プレイヤーの初期状態設定 (位置・方向・カメラ平面)
+ */
 #include "game_init.h"
 #include "game_config.h"
 
-// 何する関数か:
-// - 方角に対応する前方ベクトルを返す。
-// 参照でいじった値:
-// - なし。
-// 戻り値の意味:
-// - `dir` に対応する単位方向ベクトル。
+/**
+ * @brief 方角に対応する前方単位ベクトルを返す
+ *
+ * @param[in] dir 方角 (EAST/WEST/NORTH/SOUTH)
+ * @return 方角に対応する単位方向ベクトル
+ */
 static t_vec2d	get_dir_vector(t_dir dir)
 {
 	const t_vec2d	table[] = {
@@ -19,13 +23,14 @@ static t_vec2d	get_dir_vector(t_dir dir)
 	return (table[dir]);
 }
 
-// 何する関数か:
-// - 方角に対応するカメラ平面ベクトルを返す。
-// 参照でいじった値:
-// - なし。
-// 戻り値の意味:
-// - `dir` に対応するカメラ平面ベクトル。
-//   + `dir` と直交し、長さは `FOV_HALF_TAN` (FOV ≈ 66°)。
+/**
+ * @brief 方角に対応するカメラ平面ベクトルを返す
+ *
+ * 前方ベクトルと直交し、長さは FOV_HALF_TAN (FOV約66度)。
+ *
+ * @param[in] dir 方角 (EAST/WEST/NORTH/SOUTH)
+ * @return 方角に対応するカメラ平面ベクトル
+ */
 static t_vec2d	get_plane_vector(t_dir dir)
 {
 	const t_vec2d	table[] = {
@@ -38,16 +43,14 @@ static t_vec2d	get_plane_vector(t_dir dir)
 	return (table[dir]);
 }
 
-// 何する関数か:
-// - `t_spawn` の情報から `t_player` の全フィールドを初期化する。
-// 参照でいじった値:
-// - `player->pos` をセル中心座標に設定する。
-// - `player->dir` を方角に対応する単位ベクトルに設定する。
-// - `player->plane` を方角に対応するカメラ平面ベクトルに設定する。
-// - `player->move_speed` を秒速 `PLAYER_MOVE_SPEED` に設定する。
-// - `player->rot_speed` を秒速 `PLAYER_ROT_SPEED` に設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief スポーン情報からプレイヤーの全フィールドを初期化する
+ *
+ * 位置はセルの中心 (col+0.5, row+0.5) に配置する。
+ *
+ * @param[out] player 初期化するプレイヤー構造体
+ * @param[in]  spawn  スポーン位置と方角
+ */
 void	init_player(t_player *player, t_spawn spawn)
 {
 	player->pos.x = spawn.col + 0.5;

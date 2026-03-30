@@ -1,121 +1,108 @@
+/**
+ * @file cub_config.h
+ * @brief .cubファイルのパース結果を保持する型定義
+ */
 #ifndef CUB_CONFIG_H
 #define CUB_CONFIG_H
 
 #include <stdbool.h>
 #include <stdint.h>
 
-
-// RGBで床色と天井色を表現する構造体
-// 役割:
-// - 色の各成分と、描画用にまとめた色値を保持する。
-// 主な値:
-// - r,g,b: 赤、緑、青
-//   + `0` から `255` の範囲
-// - value: 描画用にまとめた 24bit の色値
-//   + `value = (r << 16) | (g << 8) | b`
-// - is_set: 実際に入力済みかどうか
-//   + `F 0,0,0` のような黒も有効値なので、別で管理する
+/**
+ * @struct s_rgb
+ * @brief 床色・天井色をRGBで表現する構造体
+ *
+ * 色の各成分(0-255)と、描画用にパックした24bit色値を保持する。
+ * `F 0,0,0` のような黒も有効値のため、設定済みフラグを別途管理する。
+ */
 typedef struct s_rgb
 {
-	int	r;
-	int	g;
-	int	b;
-	uint32_t	value;
-	bool is_set;
+	int	r;			/**< 赤成分 (0-255) */
+	int	g;			/**< 緑成分 (0-255) */
+	int	b;			/**< 青成分 (0-255) */
+	uint32_t	value;	/**< パック済み色値 `(r << 16) | (g << 8) | b` */
+	bool is_set;	/**< 値が設定済みかどうか */
 }	t_rgb;
 
-// 方角を表す列挙体
-// 役割:
-// - プレイヤーの初期向きや方位を表す。
-// 主な値:
-// - EAST,WEST,NORTH,SOUTH: 東西南北の4方向
+/**
+ * @enum e_dir
+ * @brief プレイヤーの初期向きや方位を表す列挙体
+ */
 typedef enum e_dir
 {
-	DIR_UNSET = -1,
-	EAST = 0,
-	WEST,
-	NORTH,
-	SOUTH
+	DIR_UNSET = -1,	/**< 未設定 */
+	EAST = 0,		/**< 東 */
+	WEST,			/**< 西 */
+	NORTH,			/**< 北 */
+	SOUTH			/**< 南 */
 }t_dir;
 
-
-// 壁テクスチャIDを表す列挙体
-//
-// 役割:
-// - 四方向の壁テクスチャを配列 index で一元管理する。
-// 主な値:
-// - TEX_NO,TEX_SO,TEX_WE,TEX_EA: 北,南,西,東の壁に対応する
-// - TEX_COUNT: 配列長
-//   + 壁テクスチャ配列は `0 <= index < TEX_COUNT` を満たす
+/**
+ * @enum e_tex_id
+ * @brief 壁テクスチャIDを表す列挙体
+ *
+ * 四方向の壁テクスチャを配列indexで一元管理する。
+ * 壁テクスチャ配列は `0 <= index < TEX_COUNT` で使用する。
+ */
 typedef enum e_tex_id
 {
-	TEX_NO = 0,
-	TEX_SO,
-	TEX_WE,
-	TEX_EA,
-	TEX_COUNT
+	TEX_NO = 0,	/**< 北壁テクスチャ */
+	TEX_SO,		/**< 南壁テクスチャ */
+	TEX_WE,		/**< 西壁テクスチャ */
+	TEX_EA,		/**< 東壁テクスチャ */
+	TEX_COUNT	/**< テクスチャの総数 (配列長として使用) */
 }	t_tex_id;
 
-// 四方向の壁テクスチャのファイルパスを保持する構造体
-// 役割:
-// - 設定ファイルから読んだテクスチャパスを方向ごとに保持する。
-// 主な値:
-// - path: 壁テクスチャのファイルパス配列
-//   + `path[TEX_NO] = NO`, `path[TEX_SO] = SO`
-//   + `path[TEX_WE] = WE`, `path[TEX_EA] = EA`
+/**
+ * @struct s_tex_path
+ * @brief 四方向の壁テクスチャファイルパスを保持する構造体
+ *
+ * 設定ファイルから読んだテクスチャパスを方向ごとに保持する。
+ * `path[TEX_NO]`=北, `path[TEX_SO]`=南, `path[TEX_WE]`=西, `path[TEX_EA]`=東。
+ */
 typedef struct s_tex_path
 {
-	char		*path[TEX_COUNT];
+	char		*path[TEX_COUNT];	/**< 方向ごとのテクスチャファイルパス */
 }	t_tex_path;
 
-// プレイヤーの初期位置と向きを保持する構造体
-// 役割:
-// - map 上のスポーン位置と初期方角を保持する。
-// 主な値:
-// - row: map上の行番号
-// - col: map上の列番号
-// - dir: プレイヤーの初期向き
-//   + `EAST`, `WEST`, `NORTH`, `SOUTH` のいずれか
+/**
+ * @struct s_spawn
+ * @brief プレイヤーの初期位置と向きを保持する構造体
+ */
 typedef struct s_spawn
 {
-	int		row;
-	int		col;
-	t_dir	dir;
+	int		row;	/**< マップ上の行番号 */
+	int		col;	/**< マップ上の列番号 */
+	t_dir	dir;	/**< 初期向き (EAST/WEST/NORTH/SOUTH) */
 }	t_spawn;
 
-
-// map本体を保持する構造体
-// 役割:
-// - map の2次元文字列と、そのサイズ情報を保持する。
-// 主な値:
-// - grid: map の各行をもつ二次元配列
-// - width: map の最大幅
-//   + 各行の長さが同じとは限らないので、最長幅を保持する
-// - height: map の行数
+/**
+ * @struct s_map
+ * @brief マップ本体を保持する構造体
+ *
+ * マップの2次元文字列とそのサイズ情報を保持する。
+ * 各行の長さは不均一の場合があるため、widthは最長行の幅を保持する。
+ */
 typedef struct s_map
 {
-	char	**grid;
-	int		width;
-	int		height;
+	char	**grid;		/**< マップの各行を持つ二次元配列 */
+	int		width;		/**< マップの最大幅 (最長行の文字数) */
+	int		height;		/**< マップの行数 */
 }	t_map;
 
-
-// `.cub` のパース結果を保持する構造体
-// 役割:
-// - 実行に必要な設定値を、パース済みの形でまとめて持つ。
-// 主な値:
-// - tex: 四方向のテクスチャパス
-// - floor_color: 床色
-// - ceiling_color: 天井色
-// - map: map 本体
-// - spawn: プレイヤーの初期位置と向き
+/**
+ * @struct s_config
+ * @brief .cubファイルのパース結果を保持するルート構造体
+ *
+ * 実行に必要な設定値をパース済みの形でまとめて持つ。
+ */
 typedef struct s_config
 {
-	t_tex_path	tex;
-	t_rgb		floor_color;
-	t_rgb		ceiling_color;
-	t_map		map;
-	t_spawn		spawn;
+	t_tex_path	tex;			/**< 四方向のテクスチャパス */
+	t_rgb		floor_color;	/**< 床色 */
+	t_rgb		ceiling_color;	/**< 天井色 */
+	t_map		map;			/**< マップ本体 */
+	t_spawn		spawn;			/**< プレイヤーの初期位置と向き */
 }	t_config;
 
 #endif

@@ -1,13 +1,16 @@
+/**
+ * @file handle_input.c
+ * @brief キー入力の初期化・押下/解放ハンドラ・イベントフック登録
+ */
 #include "cub3d.h"
 #include "game_config.h"
 #include "game_init.h"
 
-// 何する関数か:
-// - `t_input` の全フィールドを `false` で初期化する。
-// 参照でいじった値:
-// - `input` の全押下フラグを `false` に設定する。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 入力状態の全フィールドをfalseで初期化する
+ *
+ * @param[out] input 初期化する入力状態
+ */
 void	init_input(t_input *input)
 {
 	input->move_forward = false;
@@ -19,13 +22,16 @@ void	init_input(t_input *input)
 	input->quit = false;
 }
 
-// 何する関数か:
-// - キー押下イベントを受け取り、対応する入力フラグを `true` にする。
-// 参照でいじった値:
-// - `game->input` の各フラグを `true` に設定する。
-//   + `KEY_ESC` は `quit` を立てる一方通行フラグ。解放イベントでは落とさない。
-// 戻り値の意味:
-// - 0 (mlx のフック規約に従う)。
+/**
+ * @brief キー押下イベントのハンドラ
+ *
+ * 対応するキーの入力フラグをtrueにする。
+ * ESCキーはquitフラグを立てる一方通行で、解放イベントでは戻さない。
+ *
+ * @param[in]     keycode 押下されたキーコード
+ * @param[in,out] game    入力フラグを更新するゲーム状態
+ * @return 0 (MLXフック規約)
+ */
 int	handle_key_press(int keycode, t_game *game)
 {
 	if (keycode == KEY_W)
@@ -45,13 +51,16 @@ int	handle_key_press(int keycode, t_game *game)
 	return (0);
 }
 
-// 何する関数か:
-// - キー解放イベントを受け取り、対応する入力フラグを `false` にする。
-// 参照でいじった値:
-// - `game->input` の各移動・回転フラグを `false` に設定する。
-//   + `quit` は一方通行なので解放時に落とさない。
-// 戻り値の意味:
-// - 0 (mlx のフック規約に従う)。
+/**
+ * @brief キー解放イベントのハンドラ
+ *
+ * 対応するキーの入力フラグをfalseにする。
+ * quitフラグは一方通行のため、解放時には操作しない。
+ *
+ * @param[in]     keycode 解放されたキーコード
+ * @param[in,out] game    入力フラグを更新するゲーム状態
+ * @return 0 (MLXフック規約)
+ */
 int	handle_key_release(int keycode, t_game *game)
 {
 	if (keycode == KEY_W)
@@ -69,24 +78,23 @@ int	handle_key_release(int keycode, t_game *game)
 	return (0);
 }
 
-// 何する関数か:
-// - ウィンドウの閉じるボタン押下イベントを受け取り、ゲームループを終了させる。
-// 参照でいじった値:
-// - `game->running` を `false` に設定する。
-// 戻り値の意味:
-// - 0 (mlx のフック規約に従う)。
+/**
+ * @brief ウィンドウの閉じるボタン押下イベントのハンドラ
+ *
+ * @param[in,out] game runningフラグをfalseにするゲーム状態
+ * @return 0 (MLXフック規約)
+ */
 int	handle_close(t_game *game)
 {
 	game->running = false;
 	return (0);
 }
 
-// 何する関数か:
-// - mlx のイベントフックを一括登録する。
-// 参照でいじった値:
-// - なし (mlx 内部にコールバックを登録するだけ)。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief MLXのイベントフック (キー押下・解放・ウィンドウ閉じ) を一括登録する
+ *
+ * @param[in,out] game フック登録先のゲーム状態
+ */
 void	register_hooks(t_game *game)
 {
 	mlx_hook(game->mlx.win, EVENT_KEY_PRESS, MASK_KEY_PRESS,

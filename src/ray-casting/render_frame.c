@@ -1,13 +1,18 @@
+/**
+ * @file render_frame.c
+ * @brief 1フレーム分の描画 (全列レイキャスト + ウィンドウ転送)
+ */
 #include "ray_casting.h"
 #include "mlx.h"
 
-// 何する関数か:
-// - 1フレームを描画する。全列をraycastし、列単位で天井/壁/床を描画後、windowに転送する。
-// 参照でいじった値:
-// - `game->render.frame` の全ピクセルを書き換える。
-// - `game->render.ray`, `game->render.column` を各列で上書きする。
-// 戻り値の意味:
-// - なし。
+/**
+ * @brief 1フレームを描画する
+ *
+ * 全画面列(0 ～ WIN_W-1)に対してレイキャストを実行し、
+ * 列ごとに天井/壁/床を描画した後、フレームバッファをウィンドウに転送する。
+ *
+ * @param[in,out] game ゲーム状態 (render.frame/ray/columnを更新)
+ */
 void	render_frame(t_game *game)
 {
 	int	col;
