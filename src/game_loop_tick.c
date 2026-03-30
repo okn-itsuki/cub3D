@@ -1,6 +1,10 @@
 /**
  * @file game_loop_tick.c
  * @brief ゲームのメインループ (デルタタイム算出・更新・描画)
+ *
+ * @details
+ * このモジュールは,「1フレームだけゲームを進める」という責務に限定する.
+ * 直接終了処理を持たず,戻り値で上位へ状態を返すことで,loop hook側と責務分離する.
  */
 #include "ray_casting.h"
 #include "game_init.h"
@@ -31,6 +35,8 @@ static bool	get_current_time_us(uint64_t *now_us)
  *
  * 初回フレームではdelta_secを0にし、それ以降は前回tickとの差分を秒に変換する。
  * 極端なフレーム落ち時の暴走を防ぐため、delta_secは最大0.1秒にクランプする。
+ * これにより,一時停止やブレークポイント復帰直後の巨大dtで
+ * プレイヤーが一気にワープすることを防いでいる.
  *
  * @param[in,out] clock  更新対象のフレーム時計
  * @param[in]     now_us 現在時刻 [usec]
@@ -71,6 +77,7 @@ static bool	update_frame_clock(t_frame_clock *clock)
  *
  * 終了要求があれば停止を返し、時刻取得に失敗した場合は異常終了を返す。
  * 正常時はdelta timeを更新し、プレイヤー更新と描画を1フレーム分実行する。
+ * 返り値駆動にすることで,終了コードや片付け方は呼び出し元が選べる.
  *
  * @param[in,out] game ゲーム状態
  * @retval GAME_TICK_CONTINUE 正常に1フレーム処理した

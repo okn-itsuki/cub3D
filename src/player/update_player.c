@@ -1,6 +1,12 @@
 /**
  * @file update_player.c
  * @brief プレイヤーの回転・移動・壁衝突判定
+ *
+ * @details
+ * このモジュールは,入力状態を「回転」と「平面移動」へ分解してプレイヤーへ適用する.
+ * 回転では`dir`と`plane`を同じ回転行列で更新し,
+ * 移動では前後方向とストレイフ方向を合成してから衝突判定付きで反映する.
+ * 数学的には,ベクトル合成,正規化,軸分離衝突判定が中心になる.
  */
 #include "ray_casting.h"
 #include "game_config.h"
@@ -48,6 +54,8 @@ static bool	is_wall(const t_map *map, double x, double y)
 /**
  * @brief ベクトルに別ベクトルのscale倍を加算する
  *
+ * 前進/後退/左右移動の寄与を,ひとつの`delta`へ逐次合成するための補助関数.
+ *
  * @param[in,out] dst   加算先
  * @param[in]     axis  加算元ベクトル
  * @param[in]     scale 乗数
@@ -60,6 +68,10 @@ static void	add_scaled_vector(t_vec2d *dst, t_vec2d axis, double scale)
 
 /**
  * @brief カメラ平面からストレイフ方向ベクトルを求める
+ *
+ * `plane`は視野角スケール`tan(FOV/2)`を含むため,
+ * そのままではストレイフ速度へFOV依存が混ざる.
+ * そこで`FOV_HALF_TAN`で割り,長さ1の横方向ベクトルへ戻している.
  *
  * @param[in] player プレイヤー状態
  * @return 正規化済みの平行移動方向ベクトル
@@ -76,6 +88,8 @@ static t_vec2d	get_strafe_axis(const t_player *player)
  * @brief 壁との衝突判定付きでプレイヤーを移動する
  *
  * X軸とY軸を独立に判定することで,壁沿いスライド移動を実現する。
+ * 片方の軸だけが塞がれていても,もう片方の軸の移動は残せるため,
+ * 斜め移動時に「完全停止」ではなく「壁に沿って流れる」挙動になる.
  *
  * @param[in,out] player 移動するプレイヤー (posを更新)
  * @param[in]     map    壁判定用のマップデータ
@@ -109,6 +123,7 @@ static void	move_with_collision(t_player *player, const t_map *map,
  * @brief 入力状態から1フレーム分の移動ベクトルを組み立てる
  *
  * 斜め移動時は長さを正規化して,通常移動より速くならないよう補正する。
+ * これにより,W+Dのような複合入力でも,単独入力と同じ速度上限を保てる.
  *
  * @param[out]    delta  組み立てた移動量
  * @param[in]     player プレイヤー状態
@@ -146,6 +161,7 @@ static void	build_move_delta(t_vec2d *delta, const t_player *player,
  * @brief 入力状態とデルタタイムからプレイヤーを1フレーム分更新する
  *
  * 回転入力を反映した後,移動ベクトルを組み立て,壁衝突判定付きで移動を適用する。
+ * `dt`を掛けているため,フレームレートが多少変動しても移動量は時間基準で安定する.
  *
  * @param[in,out] player プレイヤー状態 (pos/dir/planeを更新)
  * @param[in]     input  現在の入力状態
