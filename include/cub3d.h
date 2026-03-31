@@ -4,8 +4,8 @@
 #include "cub_config.h"
 #include "mlx.h"
 
-#define WIN_W 1280
-#define WIN_H 960
+#define WIN_W 800
+#define WIN_H 600
 
 // MLXの画像1枚を表す構造体
 // 役割:
@@ -119,15 +119,12 @@ typedef struct s_player
 
 // 壁テクスチャ1枚の実画像を保持する構造体
 // 役割:
-// - 壁テクスチャ1枚分の実画像とロード状態を保持する。
+// - 壁テクスチャ1枚分の実画像を保持する。
 // 主な値:
 // - image: MLX上にロード済みの画像
-// - loaded: 正常にロード済みかどうか
-//   + 部分初期化失敗時は `loaded == true` のものだけ破棄する
 typedef struct s_texture
 {
 	t_img		image;
-	bool		loaded;
 }	t_texture;
 
 
@@ -139,9 +136,12 @@ typedef struct s_texture
 // - wall: 四方向の壁テクスチャ
 //  + `0 <= index < TEX_COUNT` の index だけを使う
 //  + パスは `t_config.tex`、実画像は `t_assets.wall` が管理元になる
+// - wall_mask: `wall[]` の所有状態を表す bit 集合
+//  + 部分初期化失敗時は立っている bit だけを破棄する
 typedef struct s_assets
 {
 	t_texture	wall[TEX_COUNT];
+	uint32_t	wall_mask;
 }	t_assets;
 
 
@@ -262,13 +262,12 @@ typedef struct s_frame_clock
 // - player: プレイヤーの実行時状態
 // - input: 入力状態
 // - clock: フレーム時間
-// - init_mask: 部分初期化済みの資源を表す bit 集合
+// - runtime_mask: 部分初期化済みの実行時資源を表す bit 集合
 // - running: loop を継続するかどうか
 // 初期化順:
 // - config -> mlx -> win -> frame -> assets.wall[] -> player/input/clock -> running
-// runtime資源の解放順:
-// - assets.wall[] -> render.frame -> mlx.win -> mlx.mlx
-// - config の解放は parser/sandbox 側の責務で別途行う
+// 破棄順:
+// - assets.wall[] -> render.frame -> mlx.win -> mlx.mlx -> config
 typedef struct s_game
 {
 	t_config		config;
@@ -278,7 +277,7 @@ typedef struct s_game
 	t_player		player;
 	t_input			input;
 	t_frame_clock	clock;
-	uint32_t		init_mask;
+	uint32_t		runtime_mask;
 	bool			running;
 }	t_game;
 #endif
