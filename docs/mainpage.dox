@@ -1,0 +1,555 @@
+/**
+ * @mainpage cub3Dアーキテクチャ概要
+ *
+ * @tableofcontents
+ *
+ * @section sec_goal このプログラムがしていること
+ *
+ * cub3Dは,2Dの格子マップを入力として,各画面列に対して1本ずつレイを飛ばし,
+ * DDA(Digital Differential Analyzer)で最初にぶつかる壁を探し,
+ * その距離をもとに疑似3Dの壁を描画するプログラムです.
+ *
+ * 実装上は,次の3つの層に分けて考えると理解しやすいです.
+ *
+ * - 設定層: `.cub`由来の静的データを`t_config`へ保持する.
+ * - 実行時層: MLX,画像,入力,プレイヤー,時計などを`t_game`が所有する.
+ * - 逐次処理層: `game_loop_tick()`が毎フレーム,更新と描画を進める.
+ *
+ * @note 現在のリポジトリでは,`src/main.c`に`parse_cub()`のTODOが残っているため,
+ * 実際の起動シーケンスの確認は`sandbox/render/render_sandbox_main.c`が基準になる.
+ *
+ * @section sec_modules モジュール構成
+ *
+ * @subsection sec_modules_by_dir ディレクトリごとの役割
+ *
+ * - `include/`
+ *   - 共有型,共有定数,公開関数宣言を置く.
+ *   - `cub3d.h`が中核型,`cub_config.h`が設定データ,`ray_casting.h`が更新/描画API,
+ *     `game_init.h`が初期化と破棄をまとめる.
+ * - `src/parse/`
+ *   - 設定構造体を安全な未設定状態へ初期化する.
+ * - `src/game_init/`
+ *   - MLX,ウィンドウ,フレームバッファ,テクスチャの初期化と破棄を担う.
+ * - `src/input/`
+ *   - MLXイベントを`t_input`へ写像する.
+ * - `src/init/`
+ *   - スポーン情報からプレイヤーの初期位置,初期向き,カメラ平面を構築する.
+ * - `src/player/`
+ *   - 回転,移動ベクトル生成,衝突判定付き移動を行う.
+ * - `src/render/`
+ *   - 1列ごとのレイキャストと,壁テクスチャ描画を担当する.
+ * - `src/`
+ *   - ゲームループ,マップ安全参照,設定破棄など,横断的な処理を置く.
+ *
+ * @subsection sec_module_dependency 依存の見取り図
+ *
+ * @dot
+ * digraph module_dependency {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   parse [label="parse/init_config\n設定の初期値"];
+ *   config [label="cub_config\n設定データ"];
+ *   game_init [label="game_init\nMLX/画像/破棄"];
+ *   input [label="input\nキー状態"];
+ *   init [label="init\nspawn -> player"];
+ *   player [label="player\n移動/衝突"];
+ *   render [label="render\nraycast + texture"];
+ *   loop [label="game_loop_tick\n毎フレーム制御"];
+ *
+ *   parse -> config;
+ *   game_init -> config;
+ *   game_init -> render;
+ *   input -> game_init;
+ *   init -> config;
+ *   init -> player;
+ *   player -> config;
+ *   render -> config;
+ *   loop -> input;
+ *   loop -> player;
+ *   loop -> render;
+ * }
+ * @enddot
+ *
+ * @section sec_ownership データ所有と責務分離
+ *
+ * @subsection sec_config_vs_runtime configとruntimeの分離
+ *
+ * このコードベースでは,静的設定と実行時資源を明確に分けています.
+ *
+ * - `t_config`
+ *   - `.cub`やsandbox初期化から得られる設定値を持つ.
+ *   - テクスチャパス,床/天井色,マップ文字列,スポーン位置を保持する.
+ *   - 主にヒープ上の文字列や行配列を所有する.
+ * - `t_game`
+ *   - `t_config`に加えて,MLX,テクスチャ実画像,描画バッファ,入力,プレイヤー,時計を持つ.
+ *   - 実行中に毎フレーム更新される状態のオーナーである.
+ *
+ * `config`は`NULL`やsentinel値で安全に破棄できる状態を作り,
+ * `runtime`はbitmaskで初期化済み資源を追跡する.
+ * ここで管理手法を分けているのは,所有するものの性質が異なるからです.
+ *
+ * - `t_config`は「freeしてもよいポインタ」と「未設定値」が中心で,`free(NULL)`戦略と相性がよい.
+ * - `t_game.runtime_mask`はMLX/Window/Imageのようなopaque resourceを逆順破棄するために向いている.
+ * - `t_assets.wall_mask`は壁テクスチャ4枚の部分ロード失敗を簡潔に扱える.
+ *
+ * @subsection sec_struct_ownership 構造体の所有関係
+ *
+ * @dot
+ * digraph ownership {
+ *   rankdir=TB;
+ *   node [shape=record, fontname="monospace", fontsize=10];
+ *   edge [arrowhead=odiamond, dir=back];
+ *
+ *   game [label="t_game|config|mlx|assets|render|player|input|clock|running|runtime_mask", style=bold];
+ *   config [label="t_config|tex|floor_color|ceiling_color|map|spawn"];
+ *   mlx [label="t_mlx|mlx|win"];
+ *   assets [label="t_assets|wall[4]|wall_mask"];
+ *   render [label="t_render|frame|ray|column"];
+ *   player [label="t_player|pos|dir|plane|move_speed|rot_speed"];
+ *   input [label="t_input|move/strafe/turn|quit"];
+ *   clock [label="t_frame_clock|last_tick_us|delta_sec|frame_index"];
+ *
+ *   map [label="t_map|grid|width|height"];
+ *   spawn [label="t_spawn|row|col|dir"];
+ *   tex [label="t_tex_path|path[4]"];
+ *   frame [label="t_img\nframe buffer"];
+ *   ray [label="t_ray\n1列分のDDA状態"];
+ *   column [label="t_column\n1列分の描画状態"];
+ *   texture [label="t_texture x4"];
+ *   image [label="t_img\ntexture image"];
+ *
+ *   game -> config;
+ *   game -> mlx;
+ *   game -> assets;
+ *   game -> render;
+ *   game -> player;
+ *   game -> input;
+ *   game -> clock;
+ *
+ *   config -> map;
+ *   config -> spawn;
+ *   config -> tex;
+ *   assets -> texture;
+ *   texture -> image;
+ *   render -> frame;
+ *   render -> ray;
+ *   render -> column;
+ * }
+ * @enddot
+ *
+ * @section sec_lifecycle 初期化と破棄
+ *
+ * @subsection sec_init_path 現在の初期化フロー
+ *
+ * 現在の実行可能な入口である`sandbox/render/render_sandbox_main.c`では,
+ * 次の順序で状態を組み上げます.
+ *
+ * 1. `init_game()`
+ *    - `t_game`をゼロ初期化し,`init_config()`と`init_input()`で
+ *      sentinel値を明示的に設定する.
+ * 2. `init_sandbox_config()`
+ *    - テクスチャパス,色,マップ,スポーンを組み立てる.
+ * 3. `init_game_mlx()`
+ *    - MLX本体,window,frame bufferを順に確保する.
+ * 4. `init_game_wall_textures()`
+ *    - 4方向の壁テクスチャをロードする.
+ * 5. `init_player()`
+ *    - スポーンセル中心へプレイヤーを置き,方角から`dir`と`plane`を決める.
+ * 6. `register_hooks()`
+ *    - KeyPress,KeyRelease,DestroyNotifyを登録する.
+ * 7. `mlx_loop_hook()`/`mlx_loop()`
+ *    - 毎フレーム`sandbox_loop_hook()`経由で`game_loop_tick()`を回す.
+ *
+ * @dot
+ * digraph init_flow {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   start [label="start", shape=ellipse];
+ *   game0 [label="init_game()\nzero clear + config/input sentinel"];
+ *   config [label="init_sandbox_config()\nまたは将来の parse_cub()"];
+ *   mlx [label="init_game_mlx()\nMLX -> window -> frame"];
+ *   tex [label="init_game_wall_textures()\n4方向テクスチャ読込"];
+ *   player [label="init_player()\nspawn中心 + dir/plane"];
+ *   hooks [label="register_hooks()"];
+ *   loop [label="mlx_loop_hook() + mlx_loop()", shape=ellipse];
+ *   fail [label="destroy_game()\n部分初期化でも安全に後始末", style=dashed];
+ *
+ *   start -> game0 -> config -> mlx -> tex -> player -> hooks -> loop;
+ *   config -> fail [label="失敗", style=dashed, color=red, fontcolor=red];
+ *   mlx -> fail [label="失敗", style=dashed, color=red, fontcolor=red];
+ *   tex -> fail [label="失敗", style=dashed, color=red, fontcolor=red];
+ * }
+ * @enddot
+ *
+ * @subsection sec_bitmask_runtime bitmaskで何を守っているか
+ *
+ * `runtime_mask`と`wall_mask`は,途中失敗に強いライフサイクル管理の中心です.
+ *
+ * - `GAME_MLX_READY`
+ *   - `mlx_init()`成功後に立つ.
+ * - `GAME_WINDOW_READY`
+ *   - `mlx_new_window()`成功後に立つ.
+ * - `GAME_FRAME_READY`
+ *   - `mlx_new_image()`成功後に立つ.
+ * - `GAME_WALL_TEXTURES_READY`
+ *   - 4枚すべてのテクスチャロード成功後に立つ.
+ * - `wall_mask`
+ *   - 4枚のうち,どのスロットを所有しているかを表す.
+ *
+ * この設計だと,「途中で3枚目のテクスチャだけ失敗した」場合でも,
+ * `wall_mask`を見て1枚目と2枚目だけを破棄できます.
+ * ifの組み合わせで状態を手作業管理するより,分岐が局所化されます.
+ *
+ * @subsection sec_destroy_path 破棄フロー
+ *
+ * 破棄は所有の逆順で行います.
+ * 先に壁テクスチャ,次にframe buffer,window,MLX本体,最後にconfigです.
+ * `destroy_game()`は単にfreeするだけでなく,最後に`init_game()`を呼んで
+ * 再利用可能な空状態へ戻す点が重要です.
+ *
+ * @dot
+ * digraph destroy_flow {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *
+ *   start [label="destroy_game()", shape=ellipse];
+ *   runtime [label="destroy_game_resources()"];
+ *   check_tex [label="GAME_WALL_TEXTURES_READY?", shape=diamond];
+ *   free_tex [label="destroy_texture_assets()\nwall_maskで部分破棄"];
+ *   check_frame [label="GAME_FRAME_READY?", shape=diamond];
+ *   free_frame [label="mlx_destroy_image(frame)"];
+ *   check_win [label="GAME_WINDOW_READY?", shape=diamond];
+ *   free_win [label="mlx_destroy_window()"];
+ *   check_mlx [label="GAME_MLX_READY?", shape=diamond];
+ *   free_mlx [label="destroy_mlx_display()\nLinuxはmlx_destroy_display + free"];
+ *   cfg [label="destroy_config()\npath/mapをfree"];
+ *   reset [label="init_game()\n再利用可能な初期状態へ戻す"];
+ *   done [label="done", shape=ellipse];
+ *
+ *   start -> runtime -> check_tex;
+ *   check_tex -> free_tex [label="YES"];
+ *   check_tex -> check_frame [label="NO"];
+ *   free_tex -> check_frame;
+ *   check_frame -> free_frame [label="YES"];
+ *   check_frame -> check_win [label="NO"];
+ *   free_frame -> check_win;
+ *   check_win -> free_win [label="YES"];
+ *   check_win -> check_mlx [label="NO"];
+ *   free_win -> check_mlx;
+ *   check_mlx -> free_mlx [label="YES"];
+ *   check_mlx -> cfg [label="NO"];
+ *   free_mlx -> cfg -> reset -> done;
+ * }
+ * @enddot
+ *
+ * @section sec_loop ゲームループ
+ *
+ * @subsection sec_loop_status 戻り値駆動のループ設計
+ *
+ * `game_loop_tick()`は直接`exit()`しません.
+ * 代わりに`GAME_TICK_CONTINUE`,`GAME_TICK_STOP`,`GAME_TICK_ERROR`を返します.
+ * これにより,終了の責務を上位のloop hookへ押し上げています.
+ *
+ * この分離には3つの利点があります.
+ *
+ * - 描画更新ロジックを,通常実行とsandboxで再利用しやすい.
+ * - 失敗時の終了コードやログ方針を呼び出し元で決められる.
+ * - `game_loop_tick()`自体は「1フレーム進める関数」として純度が高くなる.
+ *
+ * @dot
+ * digraph game_loop {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   hook [label="sandbox_loop_hook()", shape=ellipse];
+ *   tick [label="game_loop_tick()"];
+ *   quit [label="input.quit || !running ?", shape=diamond];
+ *   clock [label="update_frame_clock()\ngettimeofday + clamp(dt <= 0.1)"];
+ *   update [label="update_player()"];
+ *   render [label="render_frame()"];
+ *   ok [label="GAME_TICK_CONTINUE"];
+ *   stop [label="GAME_TICK_STOP"];
+ *   err [label="GAME_TICK_ERROR"];
+ *   shutdown_ok [label="shutdown_sandbox(EXIT_SUCCESS)"];
+ *   shutdown_ng [label="shutdown_sandbox(EXIT_FAILURE)"];
+ *
+ *   hook -> tick;
+ *   tick -> quit;
+ *   quit -> stop [label="YES", color=red, fontcolor=red];
+ *   quit -> clock [label="NO"];
+ *   clock -> err [label="失敗", color=red, fontcolor=red];
+ *   clock -> update [label="成功"];
+ *   update -> render -> ok;
+ *   stop -> shutdown_ok;
+ *   err -> shutdown_ng;
+ * }
+ * @enddot
+ *
+ * @section sec_math レイキャストの数学
+ *
+ * @subsection sec_camera_space 画面列からレイ方向を作る
+ *
+ * 各画面列`col`は,まずカメラ平面上の正規化座標`camera_x`へ変換されます.
+ *
+ * - 左端はほぼ`-1.0`
+ * - 中央は`0.0`
+ * - 右端はほぼ`+1.0`
+ *
+ * そこから,列ごとのレイ方向を
+ * `ray_dir = dir + plane * camera_x`
+ * で作ります.
+ *
+ * ここで,
+ *
+ * - `dir`はプレイヤーの前方単位ベクトル
+ * - `plane`は`dir`に直交するカメラ平面ベクトル
+ * - `|plane| = tan(FOV / 2)`
+ *
+ * です.
+ * つまり`plane`の長さが視野角を決め,`camera_x`が左右への振れ幅を決めます.
+ *
+ * @subsection sec_dda_math DDAでなぜ高速に壁へ届くか
+ *
+ * 2D平面を1ピクセルずつ追うのではなく,「次に横線へ当たるか,縦線へ当たるか」
+ * だけを比較してグリッドを1セルずつ進みます.
+ *
+ * 核になる量は次の2つです.
+ *
+ * - `delta_dist.x = |1 / ray_dir.x|`
+ * - `delta_dist.y = |1 / ray_dir.y|`
+ *
+ * これは「x方向,y方向に1セル進むのに必要なレイ上の距離」です.
+ * DDAは`side_dist.x`と`side_dist.y`の小さい方を選んで更新し続けるだけで,
+ * レイが横境界と縦境界のどちらへ先に当たるかを正しく追えます.
+ *
+ * @dot
+ * digraph dda_pipeline {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   dir [label="init_ray_direction()\ncolumn -> camera_x -> ray_dir"];
+ *   init [label="init_dda_step()\ndelta_dist,step,side_dist"];
+ *   loop [label="run_dda()\nsmaller side_dist側へ1セル進む"];
+ *   hit [label="map_is_solid()\n壁 or voidなら停止"];
+ *   dist [label="calc_wall_dist()\nperp_wall_dist,wall_x"];
+ *
+ *   dir -> init -> loop -> hit -> dist;
+ * }
+ * @enddot
+ *
+ * @subsection sec_perp_distance 魚眼補正と描画高さ
+ *
+ * DDAで見つけた距離をそのまま使うと,視線の角度によって壁が不自然に歪みます.
+ * そのため,描画には壁までの垂直距離`perp_wall_dist`を使います.
+ *
+ * 壁の見かけの高さは概ね
+ * `line_height = WIN_H / perp_wall_dist`
+ * で決まります.
+ *
+ * 近い壁ほど高く,遠い壁ほど低く描かれるのは,
+ * この逆数関係を使っているからです.
+ *
+ * @subsection sec_texture_sampling テクスチャ座標の作り方
+ *
+ * `wall_x`は壁面上の衝突位置の小数部で,どのテクスチャ列を使うかを表します.
+ * これを使って`tex_x`を決め,縦方向は
+ * `tex_step = tex.height / line_height`
+ * で1画面ピクセルごとの進み量を求めます.
+ *
+ * 描画側は,背景を先に全面塗りつぶし,その後で壁区間だけを上書きします.
+ * つまり`render_column()`は「床・天井も含めて全部描く関数」ではなく,
+ * 「壁区間に限定してサンプリング結果を転写する関数」になっています.
+ *
+ * @dot
+ * digraph render_pipeline {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   bg [label="fill_background()\n上半分=天井,下半分=床"];
+ *   cast [label="cast_ray()\n1列分の衝突計算"];
+ *   range [label="calc_draw_range()\nperp_wall_dist -> draw_start/end"];
+ *   texsel [label="choose_texture()\nN/S/E/W選択"];
+ *   texuv [label="calc_tex_coords()\ntex_x,tex_step,tex_pos"];
+ *   draw [label="draw_wall_range()\n壁区間だけ上書き"];
+ *   put [label="mlx_put_image_to_window()"];
+ *
+ *   bg -> cast -> range -> texsel -> texuv -> draw -> put;
+ * }
+ * @enddot
+ *
+ * @section sec_player プレイヤー更新
+ *
+ * @subsection sec_player_init 初期化の意味
+ *
+ * `init_player()`は,スポーンセルの左上ではなくセル中心
+ * `(spawn.col + 0.5,spawn.row + 0.5)`へ配置します.
+ * これにより,初期位置が格子境界に重ならず,DDAや衝突判定の初期条件が安定します.
+ *
+ * また,方角ごとに
+ *
+ * - `dir`: 前方単位ベクトル
+ * - `plane`: その直交ベクトル
+ *
+ * をテーブルから選びます.
+ * `plane`の長さは`FOV_HALF_TAN`で一定なので,視野角は方角に依存せず一定です.
+ *
+ * @subsection sec_player_update 毎フレームの移動更新
+ *
+ * `update_player()`は次の順で状態を更新します.
+ *
+ * 1. 左右回転入力を見て,`dir`と`plane`を同じ角度だけ回転する.
+ * 2. 前後移動とストレイフ移動を合成して,1フレーム分の`delta`を作る.
+ * 3. 斜め移動で長さが増えた場合は,速度が一定になるよう正規化する.
+ * 4. `move_with_collision()`でX軸,Y軸を独立に判定して位置へ反映する.
+ *
+ * ストレイフ方向は`plane / FOV_HALF_TAN`で作られます.
+ * `plane`自体は視野角スケールを含むため,そのままだと平行移動速度へFOV依存が混ざるからです.
+ *
+ * @dot
+ * digraph player_update {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   entry [label="update_player()", shape=ellipse];
+ *   rot [label="rotate_player()\ndir,planeを同角回転"];
+ *   delta [label="build_move_delta()\n前後 + strafeを合成"];
+ *   norm [label="delta_len > speed ?", shape=diamond];
+ *   scale [label="speed / delta_lenで正規化"];
+ *   move [label="move_with_collision()"];
+ *   done [label="done", shape=ellipse];
+ *
+ *   entry -> rot -> delta -> norm;
+ *   norm -> scale [label="YES"];
+ *   norm -> move [label="NO"];
+ *   scale -> move -> done;
+ * }
+ * @enddot
+ *
+ * @subsection sec_collision_axis X/Y独立判定でスライドを作る
+ *
+ * 衝突判定は,移動ベクトル全体を一度に弾くのではなく,
+ * X軸とY軸を別々に試します.
+ * これにより,片方の軸だけが壁に当たる場合でも,もう片方の軸の移動は残せます.
+ * 結果として,壁へ斜めに入ったときに「引っかかって完全停止」ではなく,
+ * 「壁沿いに滑る」挙動になります.
+ *
+ * `COLLISION_MARGIN`を使って,プレイヤー点ではなく半径つきの占有範囲として
+ * 近傍2点を調べている点も重要です.
+ *
+ * @dot
+ * digraph collision {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   start [label="move_with_collision()", shape=ellipse];
+ *   xcheck [label="X移動後の左右端を判定", shape=diamond];
+ *   xok [label="pos.x += delta.x"];
+ *   ycheck [label="Y移動後の上下端を判定", shape=diamond];
+ *   yok [label="pos.y += delta.y"];
+ *   done [label="done\n壁沿いスライド可能", shape=ellipse];
+ *
+ *   start -> xcheck;
+ *   xcheck -> xok [label="通行可"];
+ *   xcheck -> ycheck [label="壁"];
+ *   xok -> ycheck;
+ *   ycheck -> yok [label="通行可"];
+ *   ycheck -> done [label="壁"];
+ *   yok -> done;
+ * }
+ * @enddot
+ *
+ * @section sec_map マップ参照の安全設計
+ *
+ * `map_cell_at()`と`map_is_solid()`は,不揃いな行長や範囲外アクセスを
+ * 一箇所で吸収するための小さな防波堤です.
+ *
+ * - `map_cell_at()`
+ *   - 行番号が範囲外なら`' '`を返す.
+ *   - 行文字列が短くても,存在しない列は`' '`を返す.
+ * - `map_is_solid()`
+ *   - `'1'`と`' '`を移動不能とみなす.
+ *
+ * ここでvoidを壁扱いしているため,DDAも移動処理も
+ * 「マップ外へ落ちる」ケースを別分岐で持たずに済みます.
+ * これは安全性と実装の単純さの両方に効きます.
+ *
+ * @dot
+ * digraph map_access {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   query [label="(x,y)を参照したい"];
+ *   cell [label="map_cell_at()\n範囲外/短い行 -> ' '"];
+ *   solid [label="map_is_solid()\n'1' or ' ' -> true"];
+ *   users [label="利用側\nrun_dda(),move_with_collision()"];
+ *
+ *   query -> cell -> solid -> users;
+ * }
+ * @enddot
+ *
+ * @section sec_input 入力処理
+ *
+ * 入力は即時実行ではなく,状態保持型です.
+ * KeyPress/KeyReleaseイベントで`t_input`のフラグを更新し,
+ * そのフラグを`game_loop_tick()`が毎フレーム読む構成になっています.
+ *
+ * これにより,
+ *
+ * - キーリピートに依存しない連続移動
+ * - updateとinputの責務分離
+ * - 将来的な入力源の差し替え
+ *
+ * がしやすくなります.
+ *
+ * ESCは押下時に`quit = true`へ一方向に倒れ,KeyReleaseでは戻しません.
+ * DestroyNotifyでは`running = false`と`quit = true`の両方を更新します.
+ *
+ * @dot
+ * digraph input_flow {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   press [label="KeyPress"];
+ *   release [label="KeyRelease"];
+ *   close_ev [label="DestroyNotify"];
+ *   press_h [label="handle_key_press()"];
+ *   release_h [label="handle_key_release()"];
+ *   close_h [label="handle_close()"];
+ *   state [label="t_input + running"];
+ *   tick [label="game_loop_tick()\n毎フレーム参照"];
+ *
+ *   press -> press_h -> state;
+ *   release -> release_h -> state;
+ *   close_ev -> close_h -> state;
+ *   state -> tick;
+ * }
+ * @enddot
+ *
+ * @section sec_reading 読み始めのおすすめ順
+ *
+ * このコードベースを追うときは,次の順番が理解しやすいです.
+ *
+ * 1. `docs/mainpage.dox`
+ *    - 全体像と責務分離をつかむ.
+ * 2. `include/cub3d.h`
+ *    - 中核型の関係を見る.
+ * 3. `src/game_loop_tick.c`
+ *    - 1フレームの流れを理解する.
+ * 4. `src/player/update_player.c`
+ *    - 入力から移動までの変換を見る.
+ * 5. `src/render/cast_ray.c`,`src/render/cast_ray_init.c`,`src/render/render_column.c`
+ *    - DDAとテクスチャ描画の核を読む.
+ * 6. `src/game_init/`
+ *    - 所有権と破棄順を確認する.
+ */

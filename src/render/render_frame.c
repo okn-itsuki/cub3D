@@ -1,6 +1,17 @@
+/**
+ * @file render_frame.c
+ * @brief 1フレーム分の描画 (背景塗りつぶし + 全列レイキャスト + ウィンドウ転送)
+ *
+ * @details
+ * 描画は,背景一括塗りつぶしと列ごとの壁描画に二段階分割されている.
+ * これにより,`render_column()`側は壁だけに集中でき,天井/床との責務が混ざらない.
+ */
 #include "ray_casting.h"
 #include "mlx.h"
 
+/**
+ * @brief フレームバッファの1行を単色で塗りつぶす
+ */
 static void	fill_row(t_img *frame, int y, uint32_t color)
 {
 	uint32_t	*dst;
@@ -15,6 +26,11 @@ static void	fill_row(t_img *frame, int y, uint32_t color)
 	}
 }
 
+/**
+ * @brief フレームバッファ全体を天井色と床色で塗りつぶす
+ *
+ * 上半分を天井色,下半分を床色にする最も単純な背景モデルを採用している.
+ */
 static void	fill_background(t_img *frame, uint32_t ceil_color,
 		uint32_t floor_color)
 {
@@ -29,10 +45,16 @@ static void	fill_background(t_img *frame, uint32_t ceil_color,
 	while (y < frame->height)
 	{
 		fill_row(frame, y, floor_color);
-		++y;
+			++y;
 	}
 }
 
+/**
+ * @brief 全画面列に対してレイキャストと壁描画を実行する
+ *
+ * 列単位で`cast_ray()`と`render_column()`を直列に呼び,
+ * DDA結果をそのまま壁描画へ流す.
+ */
 static void	render_columns(t_game *game)
 {
 	int	col;
@@ -46,6 +68,14 @@ static void	render_columns(t_game *game)
 	}
 }
 
+/**
+ * @brief 1フレームを描画する
+ *
+ * 背景を塗りつぶした後,全画面列の壁を描画し,フレームバッファをウィンドウに転送する。
+ * 更新対象は`game->render`配下へ閉じており,他モジュールへ副作用を広げない.
+ *
+ * @param[in,out] game ゲーム状態 (render.frame/ray/columnを更新)
+ */
 void	render_frame(t_game *game)
 {
 	fill_background(&game->render.frame, game->config.ceiling_color.value,

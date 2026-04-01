@@ -1,6 +1,13 @@
+/**
+ * @file game_runtime_destroy.c
+ * @brief 実行時ゲーム資源の破棄
+ */
 #include "game_init/game_init_internal.h"
 #include "libft.h"
 
+/**
+ * @brief フレームバッファを破棄する
+ */
 static void	destroy_frame(t_game *game)
 {
 	if ((game->runtime_mask & GAME_FRAME_READY) == 0u)
@@ -10,6 +17,9 @@ static void	destroy_frame(t_game *game)
 	game->runtime_mask &= ~GAME_FRAME_READY;
 }
 
+/**
+ * @brief ウィンドウを破棄する
+ */
 static void	destroy_window(t_game *game)
 {
 	if ((game->runtime_mask & GAME_WINDOW_READY) == 0u)
@@ -19,6 +29,9 @@ static void	destroy_window(t_game *game)
 	game->runtime_mask &= ~GAME_WINDOW_READY;
 }
 
+/**
+ * @brief MLX本体を破棄する
+ */
 static void	destroy_mlx(t_game *game)
 {
 	if ((game->runtime_mask & GAME_MLX_READY) == 0u)
@@ -28,6 +41,11 @@ static void	destroy_mlx(t_game *game)
 	game->runtime_mask &= ~GAME_MLX_READY;
 }
 
+/**
+ * @brief 初期化済みのゲーム実行時資源を逆順で一括解放する
+ *
+ * @param[in,out] game 解放対象のゲーム状態
+ */
 void	destroy_game_resources(t_game *game)
 {
 	if (game == NULL)

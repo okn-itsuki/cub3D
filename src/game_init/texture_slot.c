@@ -1,11 +1,23 @@
+/**
+ * @file texture_slot.c
+ * @brief 壁テクスチャ1スロット分のロード・破棄処理
+ */
 #include "game_init/game_init_internal.h"
 #include "libft.h"
 
+/**
+ * @brief 画像メタ情報をゼロ初期化する
+ */
 static void	reset_image(t_img *image)
 {
 	ft_bzero(image, sizeof(*image));
 }
 
+/**
+ * @brief テクスチャスロットを未ロード状態にリセットする
+ *
+ * @param[out] texture リセット対象のテクスチャスロット
+ */
 void	reset_texture_slot(t_texture *texture)
 {
 	if (texture == NULL)
@@ -13,6 +25,12 @@ void	reset_texture_slot(t_texture *texture)
 	reset_image(&texture->image);
 }
 
+/**
+ * @brief テクスチャスロットのMLX画像を破棄し,空状態に戻す
+ *
+ * @param[in]     mlx_instance MLXインスタンス
+ * @param[in,out] texture      破棄対象のテクスチャスロット
+ */
 void	destroy_texture_slot(void *mlx_instance, t_texture *texture)
 {
 	if (texture == NULL)
@@ -22,6 +40,17 @@ void	destroy_texture_slot(void *mlx_instance, t_texture *texture)
 	reset_texture_slot(texture);
 }
 
+/**
+ * @brief XPMファイル1枚をMLXに読み込み,ピクセル情報を取得する
+ *
+ * 途中で失敗した場合,画像を破棄してスロットを空状態に戻す。
+ *
+ * @param[in,out] texture      読み込み先のテクスチャスロット
+ * @param[in]     mlx_instance MLXインスタンス
+ * @param[in]     texture_path XPMファイルのパス
+ * @retval true  XPM読み込みとピクセル情報の取得に成功
+ * @retval false 引数不正またはMLX呼び出しに失敗
+ */
 bool	load_texture_slot(t_texture *texture, void *mlx_instance,
 		char *texture_path)
 {
