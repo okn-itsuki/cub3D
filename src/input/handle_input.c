@@ -4,6 +4,7 @@
  */
 #include "game_init.h"
 #include "game_config.h"
+#include "mouse.h"
 
 /**
  * @brief 指定キーに対応する入力フラグを更新する
@@ -70,6 +71,7 @@ int	handle_close(t_game *game)
 {
 	if (game != NULL)
 	{
+		mouse_release(game);
 		game->running = false;
 		game->input.quit = true;
 	}
@@ -90,4 +92,5 @@ void	register_hooks(t_game *game)
 	mlx_hook(game->mlx.win, EVENT_KEY_RELEASE, MASK_KEY_RELEASE,
 		handle_key_release, game);
 	mlx_hook(game->mlx.win, EVENT_DESTROY, 0, handle_close, game);
+	mouse_capture(game);
 }

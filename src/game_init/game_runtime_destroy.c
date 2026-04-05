@@ -4,6 +4,7 @@
  */
 #include "game_init/game_init_internal.h"
 #include "libft.h"
+#include "mouse.h"
 
 /**
  * @brief フレームバッファを破棄する
@@ -50,6 +51,7 @@ void	destroy_game_resources(t_game *game)
 {
 	if (game == NULL)
 		return ;
+	mouse_release(game);
 	if ((game->runtime_mask & GAME_WALL_TEXTURES_READY) != 0u)
 	{
 		destroy_texture_assets(&game->assets, game->mlx);

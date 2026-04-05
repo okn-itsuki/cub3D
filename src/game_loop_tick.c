@@ -8,6 +8,7 @@
  */
 #include "ray_casting.h"
 #include "game_init.h"
+#include "mouse.h"
 #include <sys/time.h>
 
 #define US_PER_SEC 1000000	/**< 1秒あたりのマイクロ秒数 */
@@ -90,6 +91,7 @@ t_game_tick_status	game_loop_tick(t_game *game)
 		return (GAME_TICK_STOP);
 	if (!update_frame_clock(&game->clock))
 		return (GAME_TICK_ERROR);
+	mouse_update(game);
 	update_player(&game->player, &game->input,
 		&game->config.map, game->clock.delta_sec);
 	render_frame(game);
