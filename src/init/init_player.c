@@ -75,4 +75,5 @@ void	init_player(t_player *player, t_spawn spawn)
 	player->plane = get_plane_vector(spawn.dir);
 	player->move_speed = PLAYER_MOVE_SPEED;
 	player->rot_speed = PLAYER_ROT_SPEED;
+	player->view_offset_y = 0.0;
 }

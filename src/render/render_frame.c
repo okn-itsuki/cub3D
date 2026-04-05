@@ -32,12 +32,16 @@ static void	fill_row(t_img *frame, int y, uint32_t color)
  * 上半分を天井色,下半分を床色にする最も単純な背景モデルを採用している.
  */
 static void	fill_background(t_img *frame, uint32_t ceil_color,
-		uint32_t floor_color)
+		uint32_t floor_color, int split_y)
 {
 	int	y;
 
+	if (split_y < 0)
+		split_y = 0;
+	if (split_y > frame->height)
+		split_y = frame->height;
 	y = 0;
-	while (y < frame->height / 2)
+	while (y < split_y)
 	{
 		fill_row(frame, y, ceil_color);
 		++y;
@@ -47,6 +51,24 @@ static void	fill_background(t_img *frame, uint32_t ceil_color,
 		fill_row(frame, y, floor_color);
 			++y;
 	}
+}
+
+/**
+ * @brief 縦視点オフセットを反映した画面中心y座標を返す
+ *
+ * 画面外へ大きく外れすぎると壁や背景の見え方が破綻しやすいため,
+ * 表示可能範囲へクランプして返す.
+ */
+static int	get_view_center_y(const t_player *player)
+{
+	int	center_y;
+
+	center_y = WIN_H / 2 + (int)player->view_offset_y;
+	if (center_y < 0)
+		center_y = 0;
+	if (center_y >= WIN_H)
+		center_y = WIN_H - 1;
+	return (center_y);
 }
 
 /**
@@ -78,8 +100,9 @@ static void	render_columns(t_game *game)
  */
 void	render_frame(t_game *game)
 {
+	game->render.view_center_y = get_view_center_y(&game->player);
 	fill_background(&game->render.frame, game->config.ceiling_color.value,
-		game->config.floor_color.value);
+		game->config.floor_color.value, game->render.view_center_y);
 	render_columns(game);
 	mlx_put_image_to_window(game->mlx.mlx, game->mlx.win,
 		game->render.frame.img, 0, 0);
