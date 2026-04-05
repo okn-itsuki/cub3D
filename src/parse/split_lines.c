@@ -8,6 +8,7 @@ static int	count_lines(const char *s);
  * @brief 文字列を '\n' で分割し NULL 終端の行配列を返す
  * @param content 分割対象の文字列
  * @return 行配列 (NULL 終端)。失敗時は NULL
+ * @return count_lines が失敗（オバーフロー）時に NULL
  * @note ft_split と異なり空行も配列に含める
  */
 char	**split_lines(char *content)
@@ -16,8 +17,12 @@ char	**split_lines(char *content)
 	char	*start;
 	char	*end;
 	int		i;
+	int		line_size;
 
-	lines = malloc(sizeof(char *) * (count_lines(content) + 1));
+	line_size = count_lines(content);
+	if (line_size == -1)
+		return (NULL);
+	lines = malloc(sizeof(char *) * (line_size + 1));
 	if (!lines)
 		return (NULL);
 	i = 0;
@@ -50,5 +55,7 @@ static int	count_lines(const char *s)
 			n++;
 		s++;
 	}
+	if (n = INT32_MAX)
+		return (-1);
 	return (n);
 }
