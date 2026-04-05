@@ -255,6 +255,9 @@ static int	sect_player(char *buf, int pos, int max,
 	snprintf(tmp, sizeof(tmp), " speed : " FG_WHITE "mv=%.2f rot=%.2f" RST,
 		p->move_speed, p->rot_speed);
 	pos = emit_row(buf, pos, max, row, col, tmp);
+	snprintf(tmp, sizeof(tmp), " pitch : " FG_WHITE "%.1f px" RST,
+		p->view_offset_y);
+	pos = emit_row(buf, pos, max, row, col, tmp);
 	snprintf(tmp, sizeof(tmp), " spawn : " DIM "(%d,%d) %s" RST,
 		sp->col, sp->row, dir_to_str(sp->dir));
 	pos = emit_row(buf, pos, max, row, col, tmp);
