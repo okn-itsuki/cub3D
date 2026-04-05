@@ -18,7 +18,7 @@
  * @param[in,out] player 回転対象のプレイヤー (dir/planeを更新)
  * @param[in]     angle  回転角 [rad] (正=右回り,負=左回り)
  */
-static void	rotate_player(t_player *player, double angle)
+void	rotate_player(t_player *player, double angle)
 {
 	double	cos_a;
 	double	sin_a;
