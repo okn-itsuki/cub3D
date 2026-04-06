@@ -14,8 +14,8 @@
 #include "cub_config.h"
 #include "mlx.h"
 
-#define WIN_W 800	/**< ウィンドウ幅 [pixel] */
-#define WIN_H 600	/**< ウィンドウ高さ [pixel] */
+#define WIN_W 600	/**< ウィンドウ幅 [pixel] */
+#define WIN_H 400	/**< ウィンドウ高さ [pixel] */
 
 /**
  * @struct s_img
@@ -90,6 +90,9 @@ typedef struct s_mouse
 {
 	bool		is_captured;		/**< カーソルを捕捉している */
 	bool		skip_next_update;	/**< 次回サンプルを無視する */
+	int			pending_dx;			/**< 未適用の水平移動量 [pixel] */
+	int			pending_dy;			/**< 未適用の垂直移動量 [pixel] */
+	bool		moved_this_frame;	/**< このフレームで視点変化があった */
 }	t_mouse;
 
 /**

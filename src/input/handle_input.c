@@ -91,6 +91,10 @@ void	register_hooks(t_game *game)
 		handle_key_press, game);
 	mlx_hook(game->mlx.win, EVENT_KEY_RELEASE, MASK_KEY_RELEASE,
 		handle_key_release, game);
+#if defined(PLATFORM_LINUX)
+	mlx_hook(game->mlx.win, EVENT_MOUSE_MOVE, MASK_MOUSE_MOVE,
+		handle_mouse_move, game);
+#endif
 	mlx_hook(game->mlx.win, EVENT_DESTROY, 0, handle_close, game);
 	mouse_capture(game);
 }

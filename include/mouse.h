@@ -10,5 +10,6 @@
 void	mouse_capture(t_game *game);
 void	mouse_release(t_game *game);
 void	mouse_update(t_game *game);
+int		handle_mouse_move(int x, int y, t_game *game);
 
 #endif
