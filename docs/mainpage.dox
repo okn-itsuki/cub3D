@@ -456,7 +456,7 @@
  *
  * @subsubsection sec_mouse_view_yaw 左右視点の式
  *
- * マウスの水平差分`dx [pixel]`から回転角`\f$\theta\f$`を作ります.
+ * マウスの水平差分`dx [pixel]`から回転角`theta [rad]`を作ります.
  *
  * \f[
  * \theta = dx \times \texttt{MOUSE\_YAW\_SENSITIVITY}
@@ -514,7 +514,7 @@
  *
  * 幾何的なイメージは次の通りです.
  *
- * @verbatim
+ * ~~~text
  *             plane
  *               ^
  *               |
@@ -528,7 +528,7 @@
  *            /
  *           /
  * player o -----> dir'
- * @endverbatim
+ * ~~~
  *
  * `dir`と`plane`の直交関係を壊さないことが,
  * raycasterにおける「視野が正しい扇形で広がる」条件になります.
@@ -582,7 +582,7 @@
  *
  * 視覚的には次のような変化です.
  *
- * @verbatim
+ * ~~~text
  * 初期状態:
  *
  *   ceiling
@@ -600,7 +600,7 @@
  *   ceiling
  *   ------------------------
  *   floor                    <- view_center_y
- * @endverbatim
+ * ~~~
  *
  * この方式では「見た目の中心線」は動くが,
  * レイそのものの方向は変えていない点がポイントです.
