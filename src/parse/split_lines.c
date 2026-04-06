@@ -14,11 +14,11 @@ static int count_lines(const char *s);
  */
 char **split_lines(char *content)
 {
-	char **lines;
-	char *start;
-	char *end;
-	int i;
-	int line_size;
+	char	**lines;
+	char	*start;
+	char	*end;
+	int		i;
+	int		line_size;
 
 	line_size = count_lines(content);
 	if (line_size == -1)
@@ -47,7 +47,7 @@ char **split_lines(char *content)
  */
 static int count_lines(const char *s)
 {
-	int n;
+	int 	n;
 
 	n = 1;
 	while (*s)
