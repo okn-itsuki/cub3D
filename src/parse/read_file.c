@@ -1,4 +1,3 @@
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -7,62 +6,45 @@
 
 #define BUF_SIZE 4096
 
-static t_system_err read_fd(int fd, char *res);
-static t_system_err append_buf(char *content, char *buf, ssize_t n);
-static t_system_err open_file(const char *path, int *fd);
-static t_system_err state_file_lines(t_system_err state);
+static t_system_err	read_fd(int fd, char **content);
+static t_system_err	append_buf(char **content, char *buf, ssize_t read_size);
+static t_system_err	open_file(const char *path, int *fd);
 
-/**
- * @brief .cub ファイルを行単位で読み込み NULL 終端の配列を返す
- * @param path 読み込むファイルパス
- * @return 行配列 (NULL 終端)。失敗時は NULL
- */
-t_system_err read_file_lines(const char *path, char ***ptr)
+t_system_err	read_file_lines(const char *path, char ***ptr)
 {
-	int fd;
-	char *content;
-	char **lines;
-	t_system_err state;
+	int				fd;
+	char			*content;
+	char			**lines;
+	t_system_err	state;
 
+	if (path == NULL || ptr == NULL)
+		return (READ_ERR);
+	*ptr = NULL;
+	fd = -1;
+	content = NULL;
+	lines = NULL;
 	state = open_file(path, &fd);
 	if (state != SUCCESS)
-		return (state_file_lines(state));
-	state = read_fd(fd, content);
-	close(fd);
-	if (content == NULL)
-		return (state_file_lines(state));
-	state = split_lines(content, lines);
+		return (state);
+	state = read_fd(fd, &content);
+	if (close(fd) < 0 && state == SUCCESS)
+		state = CLOSE_ERR;
 	if (state != SUCCESS)
-		return (state_file_lines(state));
+		return (free(content), state);
+	state = split_lines(content, &lines);
 	free(content);
+	if (state != SUCCESS)
+		return (state);
 	*ptr = lines;
 	return (SUCCESS);
 }
 
-static t_system_err state_file_lines(t_system_err state)
+void	free_lines(char **lines)
 {
-	if (state == OVFL_ERR)
-		return (OVFL_ERR);
-	if (state == OPEN_ERR)
-		return (OPEN_ERR);
-	if (state == READ_ERR)
-		return (READ_ERR);
-	if (state == MALLOC_ERR)
-		return (MALLOC_ERR);
-	if (state == SUCCESS)
-		return (SUCCESS);
-};
-
-/**
- * @brief read_file_lines の戻り値を解放する
- * @param lines 解放対象の行配列
- */
-void free_lines(char **lines)
-{
-	int i;
+	int	i;
 
 	if (!lines)
-		return;
+		return ;
 	i = 0;
 	while (lines[i])
 	{
@@ -72,10 +54,7 @@ void free_lines(char **lines)
 	free(lines);
 }
 
-/**
- * @brief ファイルを O_RDONLY で開く。失敗時は stderr へ出力して -1 を返す
- */
-static t_system_err open_file(const char *path, int *fd)
+static t_system_err	open_file(const char *path, int *fd)
 {
 	*fd = open(path, O_RDONLY);
 	if (*fd < 0)
@@ -87,51 +66,41 @@ static t_system_err open_file(const char *path, int *fd)
 	return (SUCCESS);
 }
 
-/**
- * @brief chunk を既存の content に結合して返す。content は解放される
- * @return 新しい結合済み文字列。失敗時 NULL
- */
-static t_system_err append_buf(char *content, char *buf, ssize_t n)
+static t_system_err	append_buf(char **content, char *buf, ssize_t read_size)
 {
-	char *tmp;
+	char	*tmp;
 
-	buf[n] = '\0';
-	tmp = ft_strjoin(content, buf);
+	buf[read_size] = '\0';
+	tmp = ft_strjoin(*content, buf);
 	if (tmp == NULL)
 		return (MALLOC_ERR);
-	free(content);
-	content = tmp;
+	free(*content);
+	*content = tmp;
 	return (SUCCESS);
 }
 
-/**
- * @brief ファイル記述子の全内容をヒープ文字列として読み込む
- * @param fd 読み込むファイル記述子
- * @return ヒープ上の文字列。失敗時 NULL
- */
-static t_system_err read_fd(int fd, char *content)
+static t_system_err	read_fd(int fd, char **content)
 {
-	char buf[BUF_SIZE + 1];
-	char *tmp;
-	ssize_t n;
-	t_system_err state;
+	char			buf[BUF_SIZE + 1];
+	ssize_t			read_size;
+	t_system_err	state;
 
-	tmp = ft_strdup("");
-	if (!tmp)
+	*content = ft_strdup("");
+	if (*content == NULL)
 		return (MALLOC_ERR);
-	n = read(fd, buf, BUF_SIZE);
-	while (n > 0)
+	read_size = read(fd, buf, BUF_SIZE);
+	while (read_size > 0)
 	{
-		state = append_buf(tmp, buf, n);
+		state = append_buf(content, buf, read_size);
 		if (state != SUCCESS)
-			return (state_file_lines(state));
-		n = read(fd, buf, BUF_SIZE);
+			return (state);
+		read_size = read(fd, buf, BUF_SIZE);
 	}
-	if (n < 0)
+	if (read_size < 0)
 	{
-		free(tmp);
+		free(*content);
+		*content = NULL;
 		return (READ_ERR);
 	}
-	content = tmp;
 	return (SUCCESS);
 }
