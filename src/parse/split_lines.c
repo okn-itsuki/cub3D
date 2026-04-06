@@ -12,7 +12,7 @@ static int count_lines(const char *s);
  * @return count_lines が失敗（オバーフロー）時に NULL
  * @note ft_split と異なり空行も配列に含める
  */
-char **split_lines(char *content)
+t_system_err **split_lines(char *content, char **lines)
 {
 	char	**lines;
 	char	*start;
@@ -22,22 +22,27 @@ char **split_lines(char *content)
 
 	line_size = count_lines(content);
 	if (line_size == -1)
-		return (NULL);
+		return (OVFL_ERR);
 	lines = malloc(sizeof(char *) * (line_size + 1));
 	if (!lines)
-		return (NULL);
+		return (MALLOC_ERR);
 	i = 0;
 	start = content;
 	end = ft_strchr(start, '\n');
 	while (end)
 	{
 		lines[i++] = ft_substr(start, 0, end - start);
+		if (lines[i] == NULL)
+			return (MALLOC_ERR);
 		start = end + 1;
 		end = ft_strchr(start, '\n');
 	}
 	lines[i++] = ft_strdup(start);
+	if (lines[i] == NULL)
+		return (MALLOC_ERR);
 	lines[i] = NULL;
-	return (lines);
+	lines = lines;
+	return (SUCCESS);
 }
 
 /**

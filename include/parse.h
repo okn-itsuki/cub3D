@@ -4,14 +4,23 @@
 #include <stdbool.h>
 #include "cub_config.h"
 
-bool parse_cub(const char *path, t_config *config);
-void free_config(t_config *config);
+typedef enum s_sytem_err
+{
+	SUCCESS,
+	OVFL_ERR,
+	OPEN_ERR,
+	READ_ERR,
+	MALLOC_ERR
+}t_system_err;
+
+bool			parse_cub(const char *path, t_config *config);
+void			free_config(t_config *config);
 
 // read_file.c
-char **read_file_lines(const char *path);
-void free_lines(char **lines);
+t_system_err	read_file_lines(const char *path, char **ptr);
+void			free_lines(char **lines);
 
 // split_lines.c
-char **split_lines(char *content);
+t_system_err	**split_lines(char *content, char **lines);
 
 #endif

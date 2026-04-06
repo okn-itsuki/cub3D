@@ -7,43 +7,62 @@
 
 #define BUF_SIZE 4096
 
-static int		open_file(const char *path);
-static char		*read_fd(int fd);
-static char		*append_buf(char *content, char *buf, ssize_t n);
+static t_system_err read_fd(int fd, char *res);
+static t_system_err append_buf(char *content, char *buf, ssize_t n);
+static t_system_err open_file(const char *path, int *fd);
+static t_system_err state_file_lines(t_system_err state);
 
 /**
  * @brief .cub ファイルを行単位で読み込み NULL 終端の配列を返す
  * @param path 読み込むファイルパス
  * @return 行配列 (NULL 終端)。失敗時は NULL
  */
-char	**read_file_lines(const char *path)
+t_system_err read_file_lines(const char *path, char ***ptr)
 {
-	int		fd;
-	char	*content;
-	char	**lines;
+	int fd;
+	char *content;
+	char **lines;
+	t_system_err state;
 
-	fd = open_file(path);
-	if (fd < 0)
-		return (NULL);
-	content = read_fd(fd);
+	state = open_file(path, &fd);
+	if (state != SUCCESS)
+		return (state_file_lines(state));
+	state = read_fd(fd, content);
 	close(fd);
-	if (!content)
-		return (NULL);
-	lines = split_lines(content);
+	if (content == NULL)
+		return (state_file_lines(state));
+	state = split_lines(content, lines);
+	if (state != SUCCESS)
+		return (state_file_lines(state));
 	free(content);
-	return (lines);
+	*ptr = lines;
+	return (SUCCESS);
 }
+
+static t_system_err state_file_lines(t_system_err state)
+{
+	if (state == OVFL_ERR)
+		return (OVFL_ERR);
+	if (state == OPEN_ERR)
+		return (OPEN_ERR);
+	if (state == READ_ERR)
+		return (READ_ERR);
+	if (state == MALLOC_ERR)
+		return (MALLOC_ERR);
+	if (state == SUCCESS)
+		return (SUCCESS);
+};
 
 /**
  * @brief read_file_lines の戻り値を解放する
  * @param lines 解放対象の行配列
  */
-void	free_lines(char **lines)
+void free_lines(char **lines)
 {
-	int	i;
+	int i;
 
 	if (!lines)
-		return ;
+		return;
 	i = 0;
 	while (lines[i])
 	{
@@ -56,31 +75,33 @@ void	free_lines(char **lines)
 /**
  * @brief ファイルを O_RDONLY で開く。失敗時は stderr へ出力して -1 を返す
  */
-static int	open_file(const char *path)
+static t_system_err open_file(const char *path, int *fd)
 {
-	int	fd;
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
+	*fd = open(path, O_RDONLY);
+	if (*fd < 0)
 	{
 		ft_putstr_fd("Error\n", STDERR_FILENO);
 		ft_putstr_fd("failed to open file\n", STDERR_FILENO);
+		return (OPEN_ERR);
 	}
-	return (fd);
+	return (SUCCESS);
 }
 
 /**
  * @brief chunk を既存の content に結合して返す。content は解放される
  * @return 新しい結合済み文字列。失敗時 NULL
  */
-static char	*append_buf(char *content, char *buf, ssize_t n)
+static t_system_err append_buf(char *content, char *buf, ssize_t n)
 {
-	char	*tmp;
+	char *tmp;
 
 	buf[n] = '\0';
 	tmp = ft_strjoin(content, buf);
+	if (tmp == NULL)
+		return (MALLOC_ERR);
 	free(content);
-	return (tmp);
+	content = tmp;
+	return (SUCCESS);
 }
 
 /**
@@ -88,28 +109,29 @@ static char	*append_buf(char *content, char *buf, ssize_t n)
  * @param fd 読み込むファイル記述子
  * @return ヒープ上の文字列。失敗時 NULL
  */
-static char	*read_fd(int fd)
+static t_system_err read_fd(int fd, char *content)
 {
-	char	buf[BUF_SIZE + 1];
-	char	*content;
-	ssize_t	n;
+	char buf[BUF_SIZE + 1];
+	char *tmp;
+	ssize_t n;
+	t_system_err state;
 
-	content = ft_strdup("");
-	if (!content)
-		return (NULL);
+	tmp = ft_strdup("");
+	if (!tmp)
+		return (MALLOC_ERR);
 	n = read(fd, buf, BUF_SIZE);
 	while (n > 0)
 	{
-		content = append_buf(content, buf, n);
-		if (!content)
-			return (NULL);
+		state = append_buf(tmp, buf, n);
+		if (state != SUCCESS)
+			return (state_file_lines(state));
 		n = read(fd, buf, BUF_SIZE);
 	}
 	if (n < 0)
 	{
-		free(content);
-		return (NULL);
+		free(tmp);
+		return (READ_ERR);
 	}
-	return (content);
+	content = tmp;
+	return (SUCCESS);
 }
-
