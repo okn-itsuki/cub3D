@@ -74,6 +74,19 @@ static bool	update_frame_clock(t_frame_clock *clock)
 }
 
 /**
+ * @brief 継続的な描画更新が必要な入力があるかどうかを返す
+ *
+ * 移動/回転キーが押下中なら,プレイヤー状態が毎フレーム変わりうるため
+ * 再描画を省略しない.
+ */
+static bool	has_active_input(const t_input *input)
+{
+	return (input->move_forward || input->move_backward
+		|| input->strafe_left || input->strafe_right
+		|| input->turn_left || input->turn_right);
+}
+
+/**
  * @brief 1フレーム分の更新と描画を行う
  *
  * 終了要求があれば停止を返し、時刻取得に失敗した場合は異常終了を返す。
@@ -87,6 +100,8 @@ static bool	update_frame_clock(t_frame_clock *clock)
  */
 t_game_tick_status	game_loop_tick(t_game *game)
 {
+	bool	should_render;
+
 	if (game->input.quit || !game->running)
 		return (GAME_TICK_STOP);
 	if (!update_frame_clock(&game->clock))
@@ -94,6 +109,10 @@ t_game_tick_status	game_loop_tick(t_game *game)
 	mouse_update(game);
 	update_player(&game->player, &game->input,
 		&game->config.map, game->clock.delta_sec);
-	render_frame(game);
+	should_render = (game->clock.frame_index == 1
+			|| has_active_input(&game->input)
+			|| game->mouse.moved_this_frame);
+	if (should_render)
+		render_frame(game);
 	return (GAME_TICK_CONTINUE);
 }
