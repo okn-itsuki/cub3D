@@ -78,6 +78,13 @@ static bool	update_frame_clock(t_frame_clock *clock)
  *
  * 移動/回転キーが押下中なら,プレイヤー状態が毎フレーム変わりうるため
  * 再描画を省略しない.
+ * 逆に,全キーが離されていてマウス差分も無いフレームでは,
+ * 壁投影結果・背景・プレイヤー座標のいずれも変わらないため
+ * `render_frame()`を呼ばずCPU負荷を下げられる.
+ *
+ * @param[in] input 現在の入力状態
+ * @retval true  継続描画が必要
+ * @retval false 入力由来の再描画は不要
  */
 static bool	has_active_input(const t_input *input)
 {
@@ -92,6 +99,14 @@ static bool	has_active_input(const t_input *input)
  * 終了要求があれば停止を返し、時刻取得に失敗した場合は異常終了を返す。
  * 正常時はdelta timeを更新し、プレイヤー更新と描画を1フレーム分実行する。
  * 返り値駆動にすることで,終了コードや片付け方は呼び出し元が選べる.
+ *
+ * 描画は常に毎フレーム行うのではなく,次のいずれかを満たしたときだけ実行する。
+ *
+ * - 初回フレームでまだ画面が一度も出ていない
+ * - キー入力によりプレイヤー状態が継続的に変化しうる
+ * - マウス差分がこのフレームで視点へ適用された
+ *
+ * これにより,特にLinux/X11環境で「無入力でも毎フレーム再描画する」負荷を避ける.
  *
  * @param[in,out] game ゲーム状態
  * @retval GAME_TICK_CONTINUE 正常に1フレーム処理した

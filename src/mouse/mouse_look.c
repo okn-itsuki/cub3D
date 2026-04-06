@@ -19,6 +19,17 @@
 #define MOUSE_MAX_DX (WIN_W / 2)
 #define MOUSE_MAX_DY (WIN_H / 2)
 
+/**
+ * @brief 縦視点オフセットを画面内へ収まる範囲に制限する
+ *
+ * 現在の上下視点は,本物の3D pitch回転ではなく
+ * 「壁と背景の見かけ上の中心線を上下へずらす」簡易モデルである.
+ * そのため許容範囲を画面高さの半分弱へ制限しないと,
+ * 地平線が完全に画面外へ出て見た目が破綻しやすい.
+ *
+ * @param[in] offset_y 候補となる縦視点オフセット [pixel]
+ * @return クランプ済みの縦視点オフセット [pixel]
+ */
 static double	clamp_view_offset_y(double offset_y)
 {
 	double	max_offset_y;
@@ -31,6 +42,17 @@ static double	clamp_view_offset_y(double offset_y)
 	return (offset_y);
 }
 
+/**
+ * @brief 相対移動量の外れ値を安全な範囲へ丸める
+ *
+ * フォーカス復帰直後や座標取得異常時に巨大な差分が入ると,
+ * 1フレームで大回転や大きな上下移動が起こる.
+ * ここでは画面半分を上限にして,異常値がそのまま視点へ乗らないようにする.
+ *
+ * @param[in] delta 補正前の相対移動量 [pixel]
+ * @param[in] limit 絶対値の上限
+ * @return クランプ済みの相対移動量
+ */
 static int	clamp_delta(int delta, int limit)
 {
 	if (delta > limit)
@@ -40,6 +62,14 @@ static int	clamp_delta(int delta, int limit)
 	return (delta);
 }
 
+/**
+ * @brief カーソルを非表示にする
+ *
+ * LinuxとmacOSでMiniLibXのAPIシグネチャが異なるため,
+ * 呼び出し側がOS分岐を意識しないようこの関数へ閉じ込める.
+ *
+ * @param[in] game MLX本体とウィンドウを持つゲーム状態
+ */
 static void	hide_cursor(const t_game *game)
 {
 #if defined(PLATFORM_LINUX)
@@ -52,6 +82,15 @@ static void	hide_cursor(const t_game *game)
 #endif
 }
 
+/**
+ * @brief 非表示にしていたカーソルを再表示する
+ *
+ * `mouse_capture()`で隠したカーソルを通常状態へ戻す.
+ * 終了経路から複数回呼ばれても破綻しないよう,
+ * 上位では捕捉状態を見てからこの関数を呼ぶ.
+ *
+ * @param[in] game MLX本体とウィンドウを持つゲーム状態
+ */
 static void	show_cursor(const t_game *game)
 {
 #if defined(PLATFORM_LINUX)
@@ -64,6 +103,15 @@ static void	show_cursor(const t_game *game)
 #endif
 }
 
+/**
+ * @brief カーソルを相対移動の基準位置へワープさせる
+ *
+ * FPS風の操作では「絶対位置」ではなく「前回から何pixel動いたか」を使いたい.
+ * そのため各サンプル取得後にカーソルをウィンドウ中央へ戻し,
+ * 次回イベントや次回取得で生じるずれを相対移動量として読む.
+ *
+ * @param[in] game MLX本体とウィンドウを持つゲーム状態
+ */
 static void	center_cursor(const t_game *game)
 {
 #if defined(PLATFORM_LINUX)
@@ -76,6 +124,20 @@ static void	center_cursor(const t_game *game)
 #endif
 }
 
+/**
+ * @brief 現在のカーソル座標を取得する
+ *
+ * Linux版MiniLibXは`mlx_mouse_get_pos()`の戻り値で取得成功を返すため,
+ * ここでも`bool`で成功可否を返す.
+ * 失敗時は呼び出し側がそのフレームの差分適用を諦めることで,
+ * 不定な座標から巨大deltaが生じることを避ける.
+ *
+ * @param[in]  game MLX本体とウィンドウを持つゲーム状態
+ * @param[out] x    取得したx座標の書き込み先
+ * @param[out] y    取得したy座標の書き込み先
+ * @retval true  取得成功
+ * @retval false 取得失敗
+ */
 static bool	get_cursor_pos(const t_game *game, int *x, int *y)
 {
 #if defined(PLATFORM_LINUX)
@@ -91,6 +153,23 @@ static bool	get_cursor_pos(const t_game *game, int *x, int *y)
 #endif
 }
 
+/**
+ * @brief 画面上の相対移動量をプレイヤー視点へ変換する
+ *
+ * - `dx` は水平回転角 `dx * MOUSE_YAW_SENSITIVITY` [rad] へ変換
+ * - `dy` は縦視点オフセット `dy * MOUSE_PITCH_SENSITIVITY` [pixel] へ変換
+ *
+ * 左右回転は`rotate_player()`へ委譲し,方向ベクトル`dir`とカメラ平面`plane`
+ * を同じ角度だけ回す.
+ * 上下視点は描画中心線を上下へずらす簡易モデルなので,
+ * `player.view_offset_y`へ直接加算してから安全範囲へクランプする.
+ *
+ * @param[in,out] game 視点更新対象のゲーム状態
+ * @param[in]     dx   水平相対移動量 [pixel]
+ * @param[in]     dy   垂直相対移動量 [pixel]
+ * @retval true  視点が実際に変化した
+ * @retval false 変化しなかった
+ */
 static bool	apply_mouse_delta(t_game *game, int dx, int dy)
 {
 	bool	changed;
@@ -113,6 +192,15 @@ static bool	apply_mouse_delta(t_game *game, int dx, int dy)
 	return (changed);
 }
 
+/**
+ * @brief マウス視点制御を開始する
+ *
+ * カーソルを隠して中央へ寄せ,以後の差分計算に必要な内部状態を初期化する.
+ * LinuxではMotionNotifyを即利用できるため`skip_next_update`を不要にし,
+ * macOSでは中央ワープ直後の1サンプルを誤検知しないよう1回だけ読み飛ばす.
+ *
+ * @param[in,out] game マウス状態を初期化するゲーム状態
+ */
 void	mouse_capture(t_game *game)
 {
 	if (game == NULL || game->mlx.mlx == NULL || game->mlx.win == NULL)
@@ -132,6 +220,14 @@ void	mouse_capture(t_game *game)
 	game->mouse.moved_this_frame = false;
 }
 
+/**
+ * @brief マウス視点制御を終了してカーソル状態を戻す
+ *
+ * 未処理の差分やフラグをここで破棄することで,
+ * 再capture時に前回の移動量が混入しないようにする.
+ *
+ * @param[in,out] game マウス状態を解放するゲーム状態
+ */
 void	mouse_release(t_game *game)
 {
 	if (game == NULL || !game->mouse.is_captured)
@@ -144,6 +240,19 @@ void	mouse_release(t_game *game)
 	game->mouse.moved_this_frame = false;
 }
 
+/**
+ * @brief Linuxのマウス移動イベントを相対移動量として蓄積する
+ *
+ * X11のMotionNotifyは,カーソルが動いたタイミングでのみ届く.
+ * そのためLinuxでは毎フレームの座標ポーリングをやめ,
+ * イベント到着時だけ中央からのずれを`pending_dx/dy`へ加算する.
+ * 実際の視点更新は`mouse_update()`がフレーム境界でまとめて行う.
+ *
+ * @param[in]     x    イベント時のウィンドウ内x座標
+ * @param[in]     y    イベント時のウィンドウ内y座標
+ * @param[in,out] game 差分蓄積先のゲーム状態
+ * @return 0 (MLXフック規約)
+ */
 int	handle_mouse_move(int x, int y, t_game *game)
 {
 #if defined(PLATFORM_LINUX)
@@ -164,6 +273,22 @@ int	handle_mouse_move(int x, int y, t_game *game)
 	return (0);
 }
 
+/**
+ * @brief 1フレーム分のマウス視点更新を行う
+ *
+ * Linuxでは,直前までに蓄積された`pending_dx/dy`だけを消費する.
+ * そのため,マウスが動いていないフレームではX11呼び出しを追加で行わず,
+ * `moved_this_frame`もfalseのまま終了できる.
+ *
+ * macOSではMotionNotify経路を使わず,現在位置を1回取得して中央との差分を読む.
+ * ただし中央ワープ直後のサンプルは`skip_next_update`で読み飛ばし,
+ * ワープに由来する擬似入力を視点へ混ぜない.
+ *
+ * `moved_this_frame`は描画側のdirty判定へ渡され,
+ * 「入力変化がないなら再描画しない」という最適化のトリガとして使われる.
+ *
+ * @param[in,out] game 視点更新対象のゲーム状態
+ */
 void	mouse_update(t_game *game)
 {
 	int	x;
