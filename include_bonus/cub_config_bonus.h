@@ -9,11 +9,11 @@
  * `map_cell_at()`/`map_is_solid()`経由に統一している.
  */
 #ifndef BONUS_CUB_CONFIG_H
-# define BONUS_CUB_CONFIG_H
+#define BONUS_CUB_CONFIG_H
 
-# include <stdbool.h>
-# include <stddef.h>
-# include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /**
  * @struct s_rgb

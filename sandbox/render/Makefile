@@ -1,19 +1,67 @@
 NAME := render_sandbox
 
-ROOT_DIR := ../../
-SRC_DIR := $(ROOT_DIR)/src
-INCLUDE_DIR := $(ROOT_DIR)/include
+ROOT_DIR := ../..
+DEFAULT_SRC_DIR := $(ROOT_DIR)/src
+BONUS_SRC_DIR := $(ROOT_DIR)/bonus_src
+DEFAULT_INCLUDE_DIR := $(ROOT_DIR)/include
+BONUS_INCLUDE_DIR := $(ROOT_DIR)/include_bonus
 LIBFT_DIR := $(ROOT_DIR)/libft
-OBJ_DIR := obj
+OBJ_ROOT := obj
 
 CC := cc
 RM := rm -f
 RMDIR := rm -rf
 UNAME_S := $(shell uname -s)
 
-SANDBOX_SRC := $(shell find . -type f -name '*.c' 2>/dev/null)
-APP_SRC := $(shell find $(SRC_DIR) -type f -name '*.c' ! -name 'main.c' 2>/dev/null)
-SRC := $(SANDBOX_SRC) $(APP_SRC)
+BUILD_MODE := mandatory
+ifneq ($(filter bonus,$(MAKECMDGOALS)),)
+BUILD_MODE := bonus
+endif
+ifeq ($(origin BONUS),command line)
+ifneq ($(strip $(BONUS)),)
+BUILD_MODE := bonus
+endif
+endif
+
+DEBUG_BUILD :=
+ifneq ($(filter debug,$(MAKECMDGOALS)),)
+DEBUG_BUILD := 1
+endif
+ifeq ($(origin DEBUG),command line)
+ifneq ($(strip $(DEBUG)),)
+DEBUG_BUILD := 1
+endif
+endif
+
+DASHBOARD_BUILD :=
+ifneq ($(filter debug,$(MAKECMDGOALS)),)
+DASHBOARD_BUILD := 1
+endif
+ifeq ($(origin DASHBOARD),command line)
+ifneq ($(strip $(DASHBOARD)),)
+DASHBOARD_BUILD := 1
+endif
+endif
+
+ifeq ($(BUILD_MODE),bonus)
+SRC_DIR := $(BONUS_SRC_DIR)
+INCLUDE_DIR := $(BONUS_INCLUDE_DIR)
+else
+SRC_DIR := $(DEFAULT_SRC_DIR)
+INCLUDE_DIR := $(DEFAULT_INCLUDE_DIR)
+endif
+
+BUILD_TAG := $(BUILD_MODE)
+ifneq ($(strip $(DEBUG_BUILD)),)
+BUILD_TAG := $(BUILD_TAG)_debug
+endif
+
+OBJ_DIR := $(OBJ_ROOT)/$(BUILD_TAG)
+MODE_BINARY := $(OBJ_DIR)/$(NAME)
+
+SANDBOX_SRC := $(shell find . -type f -name '*.c' 2>/dev/null | sort)
+APP_SRC := $(shell find $(SRC_DIR) -type f -name '*.c' \
+	! -name 'main.c' ! -name 'main_bonus.c' 2>/dev/null | sort)
 OBJ := $(patsubst ./%.c,$(OBJ_DIR)/sandbox/%.o,$(SANDBOX_SRC)) \
 	$(patsubst $(ROOT_DIR)/%.c,$(OBJ_DIR)/%.o,$(APP_SRC))
 DEP := $(OBJ:.o=.d)
@@ -24,13 +72,16 @@ DEPFLAGS := -MMD -MP
 LDFLAGS :=
 LDLIBS :=
 
-ifneq ($(strip $(DEBUG)),)
+ifeq ($(BUILD_MODE),bonus)
+CPPFLAGS += -DBONUS_MODE
+endif
+
+ifneq ($(strip $(DEBUG_BUILD)),)
 CFLAGS += -g3 -O0
 endif
 
-ifneq ($(strip $(DASHBOARD)),)
+ifneq ($(strip $(DASHBOARD_BUILD)),)
 CPPFLAGS += -DDEBUG_DASHBOARD
-CFLAGS += -g3 -O0
 endif
 
 ifeq ($(UNAME_S),Darwin)
@@ -55,9 +106,16 @@ LDFLAGS += -L$(LIBFT_DIR)
 LDLIBS += -lft
 endif
 
-all: $(NAME)
+all: link
 
-$(NAME): $(MLX) $(LIBFT) $(OBJ)
+bonus: link
+
+debug: link
+
+link: $(MODE_BINARY)
+	cp -f $(MODE_BINARY) $(NAME)
+
+$(MODE_BINARY): $(MLX) $(LIBFT) $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o $@
 
 $(OBJ_DIR)/sandbox/%.o: ./%.c
@@ -82,17 +140,13 @@ $(LIBFT):
 endif
 
 clean:
-	$(RMDIR) $(OBJ_DIR)
+	$(RMDIR) $(OBJ_ROOT)
 
 fclean: clean
 	$(RM) $(NAME)
 
 re: fclean all
 
-debug:
-	$(MAKE) fclean
-	$(MAKE) DASHBOARD=1 all
-
 -include $(DEP)
 
-.PHONY: all clean fclean re debug
+.PHONY: all bonus debug link clean fclean re

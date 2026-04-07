@@ -9,9 +9,9 @@
  * `t_game.runtime_mask`で追跡され,途中失敗時でも逆順に安全に片付けられる.
  */
 #ifndef BONUS_GAME_INIT_H
-# define BONUS_GAME_INIT_H
+#define BONUS_GAME_INIT_H
 
-# include "cub3d_bonus.h"
+#include "cub3d_bonus.h"
 
 /**
  * @brief ゲーム実行時資源の所有状態を管理するビットマスク

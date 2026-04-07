@@ -1,7 +1,11 @@
 #ifdef DEBUG_DASHBOARD
 
 # include "debug_dashboard.h"
-# include "game_config.h"
+# ifdef BONUS_MODE
+#  include "game_config_bonus.h"
+# else
+#  include "game_config.h"
+# endif
 
 # include <stdio.h>
 # include <string.h>

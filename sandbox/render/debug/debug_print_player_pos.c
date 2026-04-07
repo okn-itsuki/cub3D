@@ -1,4 +1,8 @@
-#include "cub3d.h"
+#ifdef BONUS_MODE
+# include "cub3d_bonus.h"
+#else
+# include "cub3d.h"
+#endif
 #include <stdio.h>
 
 static void	debug_print_vec2d(const char *label, t_vec2d v)

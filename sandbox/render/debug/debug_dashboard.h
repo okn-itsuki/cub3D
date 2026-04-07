@@ -3,7 +3,11 @@
 
 # ifdef DEBUG_DASHBOARD
 
-#  include "cub3d.h"
+#  ifdef BONUS_MODE
+#   include "cub3d_bonus.h"
+#  else
+#   include "cub3d.h"
+#  endif
 
 typedef struct s_fps_stats
 {
