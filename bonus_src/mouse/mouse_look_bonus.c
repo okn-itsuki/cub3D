@@ -1,5 +1,5 @@
 /**
- * @file mouse_look.c
+ * @file mouse_look_bonus.c
  * @brief FPS風のマウス視点制御
  *
  * @details
@@ -8,9 +8,9 @@
  * MiniLibXのプラットフォーム差異はこのモジュール内へ閉じ込め,
  * 呼び出し側は capture / release / update の3操作だけを使えばよい.
  */
-#include "mouse.h"
-#include "game_config.h"
-#include "ray_casting.h"
+#include "mouse_bonus.h"
+#include "game_config_bonus.h"
+#include "ray_casting_bonus.h"
 
 #define MOUSE_CENTER_X (WIN_W / 2)
 #define MOUSE_CENTER_Y (WIN_H / 2)

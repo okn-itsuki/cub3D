@@ -1,9 +1,10 @@
 /**
- * @file game_runtime_destroy.c
+ * @file game_runtime_destroy_bonus.c
  * @brief 実行時ゲーム資源の破棄
  */
-#include "game_init/game_init_internal.h"
+#include "game_init/game_init_internal_bonus.h"
 #include "libft.h"
+#include "mouse_bonus.h"
 
 /**
  * @brief フレームバッファを破棄する
@@ -50,6 +51,7 @@ void	destroy_game_resources(t_game *game)
 {
 	if (game == NULL)
 		return ;
+	mouse_release(game);
 	if ((game->runtime_mask & GAME_WALL_TEXTURES_READY) != 0u)
 	{
 		destroy_texture_assets(&game->assets, game->mlx);

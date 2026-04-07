@@ -1,5 +1,5 @@
 /**
- * @file update_player.c
+ * @file update_player_bonus.c
  * @brief プレイヤーの回転・移動・壁衝突判定
  *
  * @details
@@ -8,8 +8,8 @@
  * 移動では前後方向とストレイフ方向を合成してから衝突判定付きで反映する.
  * 数学的には,ベクトル合成,正規化,軸分離衝突判定が中心になる.
  */
-#include "ray_casting.h"
-#include "game_config.h"
+#include "ray_casting_bonus.h"
+#include "game_config_bonus.h"
 #include <math.h>
 
 /**
@@ -18,7 +18,7 @@
  * @param[in,out] player 回転対象のプレイヤー (dir/planeを更新)
  * @param[in]     angle  回転角 [rad] (正=右回り,負=左回り)
  */
-static void	rotate_player(t_player *player, double angle)
+void	rotate_player(t_player *player, double angle)
 {
 	double	cos_a;
 	double	sin_a;

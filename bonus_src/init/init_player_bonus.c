@@ -1,5 +1,5 @@
 /**
- * @file init_player.c
+ * @file init_player_bonus.c
  * @brief プレイヤーの初期状態設定 (位置・方向・カメラ平面)
  *
  * @details
@@ -8,8 +8,8 @@
  * 特に,`dir`と`plane`を常に直交した組として初期化することで,
  * 後続のレイキャストが`ray_dir = dir + plane * camera_x`でそのまま書ける.
  */
-#include "game_init.h"
-#include "game_config.h"
+#include "game_init_bonus.h"
+#include "game_config_bonus.h"
 
 /**
  * @brief 方角に対応する前方単位ベクトルを返す
@@ -75,4 +75,5 @@ void	init_player(t_player *player, t_spawn spawn)
 	player->plane = get_plane_vector(spawn.dir);
 	player->move_speed = PLAYER_MOVE_SPEED;
 	player->rot_speed = PLAYER_ROT_SPEED;
+	player->view_offset_y = 0.0;
 }

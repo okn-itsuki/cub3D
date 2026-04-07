@@ -1,5 +1,5 @@
 /**
- * @file cub3d.h
+ * @file cub3d_bonus.h
  * @brief cub3Dの中心的な型定義 (画像・ベクトル・プレイヤー・レイキャスト・ゲーム状態)
  *
  * @details
@@ -8,14 +8,14 @@
  * 一元的にまとめることで,関数シグネチャと所有関係を読みやすくしている.
  * 詳しいアーキテクチャ説明とDOT図は`docs/mainpage.dox`側に集約する.
  */
-#ifndef CUB3D_H
-#define CUB3D_H
+#ifndef BONUS_CUB3D_H
+# define BONUS_CUB3D_H
 
-#include "cub_config.h"
-#include "mlx.h"
+# include "cub_config_bonus.h"
+# include "mlx.h"
 
-#define WIN_W 800	/**< ウィンドウ幅 [pixel] */
-#define WIN_H 600	/**< ウィンドウ高さ [pixel] */
+# define WIN_W 800	/**< ウィンドウ幅 [pixel] */
+# define WIN_H 600	/**< ウィンドウ高さ [pixel] */
 
 /**
  * @struct s_img
@@ -80,12 +80,29 @@ typedef struct s_input
 }	t_input;
 
 /**
+ * @struct s_mouse
+ * @brief マウス視点制御の実行時状態
+ *
+ * カーソルを中央固定して相対移動だけを見るFPS風操作のため,
+ * 捕捉中かどうかと,中央ワープ直後の1サンプルを無視するフラグを持つ.
+ */
+typedef struct s_mouse
+{
+	bool		is_captured;		/**< カーソルを捕捉している */
+	bool		skip_next_update;	/**< 次回サンプルを無視する */
+	int			pending_dx;			/**< 未適用の水平移動量 [pixel] */
+	int			pending_dy;			/**< 未適用の垂直移動量 [pixel] */
+	bool		moved_this_frame;	/**< このフレームで視点変化があった */
+}	t_mouse;
+
+/**
  * @struct s_player
  * @brief プレイヤーの実行時状態 (毎フレーム更新)
  *
  * - pos: ワールド座標系の現在位置。初期値は `spawn.col+0.5, spawn.row+0.5`
  * - dir: 正規化済み前方ベクトル (`||dir|| = 1`)
  * - plane: カメラ平面ベクトル。dirと直交し `||plane|| = tan(FOV/2)`
+ * - view_offset_y: 画面中心からの縦視点オフセット [pixel]
  */
 typedef struct s_player
 {
@@ -94,6 +111,7 @@ typedef struct s_player
 	t_vec2d		plane;		/**< カメラ平面ベクトル (dirと直交) */
 	double		move_speed;	/**< 移動速度 [セル/秒] */
 	double		rot_speed;	/**< 回転速度 [rad/秒] */
+	double		view_offset_y;	/**< 縦視点オフセット [pixel] */
 }	t_player;
 
 /**
@@ -184,6 +202,7 @@ typedef struct s_render
 	t_img		frame;	/**< 画面全体を書き込むオフスクリーン画像 */
 	t_ray		ray;	/**< 1列分のDDA計算用 */
 	t_column	column;	/**< 1列分の描画パラメータ */
+	int			view_center_y;	/**< このフレームの見かけの画面中心y */
 }	t_render;
 
 /**
@@ -205,7 +224,7 @@ typedef struct s_frame_clock
  * @brief cub3D全体の実行状態をまとめるルート構造体
  *
  * @par 初期化順
- * config -> mlx -> win -> frame -> assets.wall[] -> player/input/clock -> running
+ * config -> mlx -> win -> frame -> assets.wall[] -> player/input/mouse/clock -> running
  *
  * @par 破棄順
  * assets.wall[] -> render.frame -> mlx.win -> mlx.mlx -> config
@@ -218,8 +237,10 @@ typedef struct s_game
 	t_render		render;			/**< フレーム画像とレイキャスト作業領域 */
 	t_player		player;			/**< プレイヤーの実行時状態 */
 	t_input			input;			/**< 入力状態 */
+	t_mouse			mouse;			/**< マウス視点制御状態 */
 	t_frame_clock	clock;			/**< フレーム時間 */
 	uint32_t		runtime_mask;	/**< 初期化済み実行時資源を表すビットマスク */
 	bool			running;		/**< ゲームループ継続フラグ */
 }	t_game;
+
 #endif

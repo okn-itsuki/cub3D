@@ -14,5 +14,4 @@ void	debug_print_player_pos_all(const t_player player)
 	debug_print_vec2d("- plane", player.plane);
 	printf("  - move_speed = %f\n", player.move_speed);
 	printf("  - rot_speed  = %f\n", player.rot_speed);
-	printf("  - view_off_y = %f\n", player.view_offset_y);
 }

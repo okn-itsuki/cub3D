@@ -1,13 +1,13 @@
 /**
- * @file render_column.c
+ * @file render_column_bonus.c
  * @brief 壁1列分の描画処理 (描画範囲計算・テクスチャ選択・ピクセル書き込み)
  *
  * @details
  * このファイルは,レイキャストで得た幾何情報を「実際の画素列」へ変換する役割を持つ.
  * 背景は別で塗りつぶされている前提にし,ここでは壁区間だけへ責務を限定している.
  */
-#include "ray_casting.h"
-#include "game_config.h"
+#include "ray_casting_bonus.h"
+#include "game_config_bonus.h"
 
 /**
  * @brief 壁の垂直距離から描画範囲(draw_start,draw_end)を計算する
@@ -18,17 +18,17 @@
  * @param[in]  perp_wall_dist 魚眼補正済みの壁までの垂直距離
  * @return 壁1列の高さ(line_height)。テクスチャ座標計算に使用する。
  */
-static int	calc_draw_range(t_column *col, double perp_wall_dist)
+static int	calc_draw_range(t_column *col, double perp_wall_dist, int center_y)
 {
 	int	line_height;
 
 	line_height = (int)(WIN_H / perp_wall_dist);
 	if (line_height < 1)
 		line_height = 1;
-	col->draw_start = WIN_H / 2 - line_height / 2;
+	col->draw_start = center_y - line_height / 2;
 	if (col->draw_start < 0)
 		col->draw_start = 0;
-	col->draw_end = WIN_H / 2 + line_height / 2;
+	col->draw_end = center_y + line_height / 2;
 	if (col->draw_end >= WIN_H)
 		col->draw_end = WIN_H - 1;
 	return (line_height);
@@ -58,7 +58,7 @@ static void	choose_texture(t_column *col, const t_ray *ray)
  * テクスチャ縦方向の進み量を表す.
  */
 static void	calc_tex_coords(t_column *col, const t_ray *ray,
-		const t_img *tex, int line_height)
+		const t_img *tex, int line_height, int center_y)
 {
 	col->tex_x = (int)(ray->wall_x * tex->width);
 	if (col->tex_x >= tex->width)
@@ -68,7 +68,7 @@ static void	calc_tex_coords(t_column *col, const t_ray *ray,
 	if (ray->hit_side == HIT_Y && ray->ray_dir.y > 0)
 		col->tex_x = tex->width - col->tex_x - 1;
 	col->tex_step = (double)tex->height / (double)line_height;
-	col->tex_pos = (col->draw_start - WIN_H / 2 + line_height / 2)
+	col->tex_pos = (col->draw_start - center_y + line_height / 2)
 		* col->tex_step;
 }
 
@@ -120,9 +120,11 @@ void	render_column(t_render *render, const t_assets *assets)
 
 	col = &render->column;
 	col->column = render->ray.column;
-	line_height = calc_draw_range(col, render->ray.perp_wall_dist);
+	line_height = calc_draw_range(col, render->ray.perp_wall_dist,
+			render->view_center_y);
 	choose_texture(col, &render->ray);
 	tex = &assets->wall[col->tex_id].image;
-	calc_tex_coords(col, &render->ray, tex, line_height);
+	calc_tex_coords(col, &render->ray, tex, line_height,
+		render->view_center_y);
 	draw_wall_range(&render->frame, col, tex);
 }

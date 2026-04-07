@@ -30,11 +30,9 @@
  */
 #define EVENT_KEY_PRESS      2		/**< キー押下イベント */
 #define EVENT_KEY_RELEASE    3		/**< キー解放イベント */
-#define EVENT_MOUSE_MOVE     6		/**< マウス移動イベント */
 #define EVENT_DESTROY        17		/**< ウィンドウ破棄イベント */
 #define MASK_KEY_PRESS       (1L << 0)	/**< キー押下イベントマスク */
 #define MASK_KEY_RELEASE     (1L << 1)	/**< キー解放イベントマスク */
-#define MASK_MOUSE_MOVE      (1L << 6)	/**< マウス移動イベントマスク */
 /** @} */
 
 /** @name プラットフォーム判定

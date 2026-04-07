@@ -185,7 +185,6 @@ static int	sandbox_loop_hook(t_sandbox_ctx *ctx)
 	return (0);
 }
 #else
-
 static int	sandbox_loop_hook(t_game *game)
 {
 	t_game_tick_status	status;

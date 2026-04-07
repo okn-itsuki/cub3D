@@ -1,5 +1,5 @@
 /**
- * @file mouse.h
+ * @file mouse_bonus.h
  * @brief マウス視点制御の公開API
  *
  * @details
@@ -16,10 +16,10 @@
  * LinuxではMotionNotifyを入口にしたイベント駆動,macOSでは毎フレームの
  * 相対移動取得という別経路を持つが,その差異はこの公開APIの外へ漏らさない.
  */
-#ifndef MOUSE_H
-# define MOUSE_H
+#ifndef BONUS_MOUSE_H
+# define BONUS_MOUSE_H
 
-# include "cub3d.h"
+# include "cub3d_bonus.h"
 
 /**
  * @brief マウス視点制御を開始する
