@@ -3,6 +3,9 @@
 /obj/
 /minilibx-macos/
 /minilibx-linux/
+/minilibx_opengl_20191021/*.o
+/minilibx_opengl_20191021/libmlx.a
+/minilibx_opengl_20191021/mlx_app
 /libft/libft.a
 /libft/obj/
 /sandbox/render/render_sandbox

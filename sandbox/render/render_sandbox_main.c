@@ -1,6 +1,12 @@
-#include "cub3d.h"
-#include "game_init.h"
-#include "ray_casting.h"
+#ifdef BONUS_MODE
+# include "cub3d_bonus.h"
+# include "game_init_bonus.h"
+# include "ray_casting_bonus.h"
+#else
+# include "cub3d.h"
+# include "game_init.h"
+# include "ray_casting.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
