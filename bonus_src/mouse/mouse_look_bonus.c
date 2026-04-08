@@ -138,6 +138,7 @@ static void	center_cursor(const t_game *game)
  * @retval true  取得成功
  * @retval false 取得失敗
  */
+#if defined(PlATFORM_MACOS)
 static bool	get_cursor_pos(const t_game *game, int *x, int *y)
 {
 #if defined(PLATFORM_LINUX)
@@ -152,6 +153,7 @@ static bool	get_cursor_pos(const t_game *game, int *x, int *y)
 	return (true);
 #endif
 }
+#endif
 
 /**
  * @brief 画面上の相対移動量をプレイヤー視点へ変換する
@@ -253,6 +255,8 @@ void	mouse_update(t_game *game)
 		return ;
 	game->mouse.moved_this_frame = false;
 #if defined(PLATFORM_LINUX)
+	(void)x;
+	(void)y;
 	if (game->mouse.pending_dx == 0 && game->mouse.pending_dy == 0)
 		return ;
 	game->mouse.moved_this_frame = apply_mouse_delta(game,
