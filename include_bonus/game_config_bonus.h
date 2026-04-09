@@ -22,7 +22,7 @@
 # define PLAYER_MOVE_SPEED 3.0	/**< 移動速度 [セル/秒] */
 # define PLAYER_ROT_SPEED 3.0	/**< 回転速度 [rad/秒] */
 # define FOV_HALF_TAN 0.6		/**< 視野角の半分のtan値 (FOV約66度) */
-# define COLLISION_MARGIN 0.2	/**< 壁との衝突判定マージン [セル] */
+# define COLLISION_MARGIN 0.25	/**< 壁との衝突判定マージン [セル] */
 /** @} */
 
 /** @name X11イベント定数
