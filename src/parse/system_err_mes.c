@@ -1,0 +1,47 @@
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include "libft.h"
+#include "parse.h"
+
+t_system_err	open_file(const char *path, int *fd)
+{
+	*fd = open(path, O_RDONLY);
+	if (*fd < 0)
+	{
+		ft_putstr_fd("Error\n", STDERR_FILENO);
+		perror("open");
+		return (OPEN_ERR);
+	}
+	return (SUCCESS);
+}
+
+t_system_err	read_file_buf(int fd, char *buf, size_t buf_size, ssize_t *read_size)
+{
+	*read_size = read(fd, buf, buf_size);
+	if (*read_size < 0)
+	{
+		ft_putstr_fd("Error\n", STDERR_FILENO);
+		perror("read");
+		return (READ_ERR);
+	}
+	return (SUCCESS);
+}
+
+t_system_err	close_file(int fd)
+{
+	if (close(fd) < 0)
+	{
+		ft_putstr_fd("Error\n", STDERR_FILENO);
+		perror("close");
+		return (CLOSE_ERR);
+	}
+	return (SUCCESS);
+}
+
+t_system_err	malloc_err(void)
+{
+	ft_putstr_fd("Error\n", STDERR_FILENO);
+	ft_putstr_fd("memory allocation failed\n", STDERR_FILENO);
+	return (MALLOC_ERR);
+}
