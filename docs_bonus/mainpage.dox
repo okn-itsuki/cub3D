@@ -433,6 +433,283 @@
  * }
  * @enddot
  *
+ * @subsection sec_mouse_view_math マウス視点とプレイヤー視点の数学
+ *
+ * 現在のマウス視点制御は,3D空間でカメラ姿勢を完全に持つ方式ではなく,
+ * 2D raycasterの前提を保ったまま「左右回転」と「簡易な上下視点」を組み合わせる.
+ * ここで重要なのは,回している対象と,回していない対象を分けて考えることです.
+ *
+ * - 左右視点:
+ *   - プレイヤーの前方ベクトル`dir`
+ *   - カメラ平面ベクトル`plane`
+ *   を2次元回転行列で同時に回す.
+ * - 上下視点:
+ *   - `dir`や`plane`は回さない.
+ *   - 描画時の画面中心線`view_center_y`だけを上下へずらす.
+ *
+ * つまり,数学的には
+ *
+ * - yaw: 幾何の回転
+ * - pseudo pitch: 投影結果の平行移動
+ *
+ * という役割分担になっています.
+ *
+ * @subsubsection sec_mouse_view_yaw 左右視点の式
+ *
+ * マウスの水平差分`dx [pixel]`から回転角`theta [rad]`を作ります.
+ *
+ * \f[
+ * \theta = dx \times \texttt{MOUSE\_YAW\_SENSITIVITY}
+ * \f]
+ *
+ * その角度で`dir`と`plane`へ同じ2D回転を掛けます.
+ *
+ * \f[
+ * \begin{bmatrix}
+ * x' \\
+ * y'
+ * \end{bmatrix}
+ * =
+ * \begin{bmatrix}
+ * \cos \theta & -\sin \theta \\
+ * \sin \theta & \cos \theta
+ * \end{bmatrix}
+ * \begin{bmatrix}
+ * x \\
+ * y
+ * \end{bmatrix}
+ * \f]
+ *
+ * `dir`だけでなく`plane`も同じ角度で回す理由は,
+ * レイ方向が常に
+ *
+ * \f[
+ * \texttt{ray\_dir} = \texttt{dir} + \texttt{plane} \times \texttt{camera\_x}
+ * \f]
+ *
+ * で作られるからです.
+ * どちらか片方だけ回すと,視野の左右端が表す方向と前方方向の関係が崩れ,
+ * 画角や見え方が破綻します.
+ *
+ * @dot
+ * digraph mouse_yaw_vectors {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   dx [label="mouse dx [pixel]"];
+ *   theta [label="theta = dx * sensitivity"];
+ *   rot [label="2D回転行列 R(theta)"];
+ *   dir [label="dir' = R(theta) * dir"];
+ *   plane [label="plane' = R(theta) * plane"];
+ *   ray [label="ray_dir = dir' + plane' * camera_x"];
+ *
+ *   dx -> theta -> rot;
+ *   rot -> dir;
+ *   rot -> plane;
+ *   dir -> ray;
+ *   plane -> ray;
+ * }
+ * @enddot
+ *
+ * 幾何的なイメージは次の通りです.
+ *
+ * ~~~text
+ *             plane
+ *               ^
+ *               |
+ *               |
+ * player o -----> dir
+ *
+ * 左へマウスを動かす:
+ *   dir と plane が「十字のまま」反時計回りに回る
+ *
+ *             plane'
+ *            /
+ *           /
+ * player o -----> dir'
+ * ~~~
+ *
+ * `dir`と`plane`の直交関係を壊さないことが,
+ * raycasterにおける「視野が正しい扇形で広がる」条件になります.
+ *
+ * @subsubsection sec_mouse_view_pitch 簡易な上下視点
+ *
+ * 上下視点は本物のpitch回転ではありません.
+ * 本物の3Dカメラなら,前方ベクトルがZ軸方向も含めて回転し,
+ * 床・天井・壁の投影すべてが3次元的に変化します.
+ * しかし現在の実装は2D raycasterなので,Z軸方向の幾何は持っていません.
+ *
+ * そこで,垂直差分`dy [pixel]`を
+ * `player.view_offset_y`へ積み,
+ * 描画時の画面中心線だけをずらします.
+ *
+ * \f[
+ * \texttt{view\_offset\_y}
+ * \leftarrow
+ * \texttt{clamp}
+ * \left(
+ * \texttt{view\_offset\_y} - dy \times \texttt{MOUSE\_PITCH\_SENSITIVITY}
+ * \right)
+ * \f]
+ *
+ * 描画側では
+ *
+ * \f[
+ * \texttt{view\_center\_y} = \frac{\texttt{WIN\_H}}{2} + \texttt{view\_offset\_y}
+ * \f]
+ *
+ * を使い,背景の境界線と壁列の上下位置を決めます.
+ *
+ * @dot
+ * digraph mouse_pitch_projection {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   dy [label="mouse dy [pixel]"];
+ *   off [label="view_offset_y を加算"];
+ *   clamp [label="画面内へ clamp"];
+ *   center [label="view_center_y = WIN_H/2 + offset"];
+ *   bg [label="背景の境界線 split_y"];
+ *   wall [label="壁列中心 draw_start/draw_end"];
+ *
+ *   dy -> off -> clamp -> center;
+ *   center -> bg;
+ *   center -> wall;
+ * }
+ * @enddot
+ *
+ * 視覚的には次のような変化です.
+ *
+ * ~~~text
+ * 初期状態:
+ *
+ *   ceiling
+ *   --------------------  <- WIN_H / 2
+ *   floor
+ *
+ * 上を向く( view_center_y が上へ移動 ):
+ *
+ *   ceiling
+ *   ----------          <- view_center_y
+ *   floor
+ *
+ * 下を向く( view_center_y が下へ移動 ):
+ *
+ *   ceiling
+ *   ------------------------
+ *   floor                    <- view_center_y
+ * ~~~
+ *
+ * この方式では「見た目の中心線」は動くが,
+ * レイそのものの方向は変えていない点がポイントです.
+ * そのため
+ *
+ * - 実装は軽い
+ * - 2D raycasterの構造を崩さない
+ * - ただし本物の3D pitchほどの表現力はない
+ *
+ * というトレードオフになります.
+ *
+ * @subsubsection sec_mouse_input_flow LinuxとmacOSでの差分取得
+ *
+ * マウス差分の取得方法はOSごとに分けています.
+ *
+ * - Linux:
+ *   - `MotionNotify`で「動いた時だけ」差分を受け取る
+ *   - 差分を`pending_dx/dy`へ蓄積する
+ *   - フレーム境界で`mouse_update()`がまとめて消費する
+ * - macOS:
+ *   - 毎フレーム現在位置を取得する
+ *   - 中央との差分をその場で使う
+ *   - 中央ワープ直後の1回は`skip_next_update`で捨てる
+ *
+ * Linuxでイベント駆動にしているのは,
+ * 無入力フレームの`XQueryPointer`や`XWarpPointer`を減らし,
+ * Ubuntuで目立っていたカクつきを抑えるためです.
+ *
+ * @dot
+ * digraph mouse_input_flow {
+ *   rankdir=LR;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   linux_ev [label="Linux MotionNotify"];
+ *   pending [label="pending_dx/dy に蓄積"];
+ *   mac_poll [label="macOS\nget_cursor_pos()"];
+ *   upd [label="mouse_update()"];
+ *   apply [label="apply_mouse_delta()"];
+ *   dirty [label="moved_this_frame"];
+ *
+ *   linux_ev -> pending -> upd;
+ *   mac_poll -> upd;
+ *   upd -> apply -> dirty;
+ * }
+ * @enddot
+ *
+ * @subsubsection sec_mouse_render_link 再描画判定との接続
+ *
+ * マウス差分が実際に視点変化へ変換されたときだけ,
+ * `moved_this_frame = true`になります.
+ * `game_loop_tick()`はこれを見て,キー入力もマウス差分も無いフレームでは
+ * `render_frame()`を呼びません.
+ *
+ * つまり全体フローは次のようになります.
+ *
+ * @dot
+ * digraph mouse_render_flow {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   input [label="mouse event / mouse poll"];
+ *   update [label="mouse_update()"];
+ *   delta [label="apply_mouse_delta()"];
+ *   dirty [label="moved_this_frame ?", shape=diamond];
+ *   render [label="render_frame()"];
+ *   skip [label="描画省略"];
+ *
+ *   input -> update -> delta -> dirty;
+ *   dirty -> render [label="YES"];
+ *   dirty -> skip [label="NO\nかつキー入力も無い"];
+ * }
+ * @enddot
+ *
+ * @subsection sec_collision_axis X/Y独立判定でスライドを作る
+ *
+ * 衝突判定は,移動ベクトル全体を一度に弾くのではなく,
+ * X軸とY軸を別々に試します.
+ * これにより,片方の軸だけが壁に当たる場合でも,もう片方の軸の移動は残せます.
+ * 結果として,壁へ斜めに入ったときに「引っかかって完全停止」ではなく,
+ * 「壁沿いに滑る」挙動になります.
+ *
+ * `COLLISION_MARGIN`を使って,プレイヤー点ではなく半径つきの占有範囲として
+ * 近傍2点を調べている点も重要です.
+ *
+ * @dot
+ * digraph collision {
+ *   rankdir=TB;
+ *   node [shape=box, fontname="sans-serif", fontsize=10];
+ *   edge [fontname="sans-serif", fontsize=9];
+ *
+ *   start [label="move_with_collision()", shape=ellipse];
+ *   xcheck [label="X移動後の左右端を判定", shape=diamond];
+ *   xok [label="pos.x += delta.x"];
+ *   ycheck [label="Y移動後の上下端を判定", shape=diamond];
+ *   yok [label="pos.y += delta.y"];
+ *   done [label="done\n壁沿いスライド可能", shape=ellipse];
+ *
+ *   start -> xcheck;
+ *   xcheck -> xok [label="通行可"];
+ *   xcheck -> ycheck [label="壁"];
+ *   xok -> ycheck;
+ *   ycheck -> yok [label="通行可"];
+ *   ycheck -> done [label="壁"];
+ *   yok -> done;
+ * }
+ * @enddot
+ *
  * @section sec_map マップ参照の安全設計
  *
  * `map_cell_at()`と`map_is_solid()`は,不揃いな行長や範囲外アクセスを

@@ -4,6 +4,7 @@
  */
 #include "game_init_bonus.h"
 #include "game_config_bonus.h"
+#include "mouse_bonus.h"
 
 /**
  * @brief 指定キーに対応する入力フラグを更新する
@@ -70,6 +71,7 @@ int	handle_close(t_game *game)
 {
 	if (game != NULL)
 	{
+		mouse_release(game);
 		game->running = false;
 		game->input.quit = true;
 	}
@@ -89,5 +91,10 @@ void	register_hooks(t_game *game)
 		handle_key_press, game);
 	mlx_hook(game->mlx.win, EVENT_KEY_RELEASE, MASK_KEY_RELEASE,
 		handle_key_release, game);
+#if defined(PLATFORM_LINUX)
+	mlx_hook(game->mlx.win, EVENT_MOUSE_MOVE, MASK_MOUSE_MOVE,
+		handle_mouse_move, game);
+#endif
 	mlx_hook(game->mlx.win, EVENT_DESTROY, 0, handle_close, game);
+	mouse_capture(game);
 }

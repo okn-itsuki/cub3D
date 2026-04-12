@@ -8,6 +8,7 @@
  */
 #include "ray_casting_bonus.h"
 #include "game_init_bonus.h"
+#include "mouse_bonus.h"
 #include <sys/time.h>
 
 #define US_PER_SEC 1000000	/**< 1秒あたりのマイクロ秒数 */
@@ -73,11 +74,39 @@ static bool	update_frame_clock(t_frame_clock *clock)
 }
 
 /**
+ * @brief 継続的な描画更新が必要な入力があるかどうかを返す
+ *
+ * 移動/回転キーが押下中なら,プレイヤー状態が毎フレーム変わりうるため
+ * 再描画を省略しない.
+ * 逆に,全キーが離されていてマウス差分も無いフレームでは,
+ * 壁投影結果・背景・プレイヤー座標のいずれも変わらないため
+ * `render_frame()`を呼ばずCPU負荷を下げられる.
+ *
+ * @param[in] input 現在の入力状態
+ * @retval true  継続描画が必要
+ * @retval false 入力由来の再描画は不要
+ */
+static bool	has_active_input(const t_input *input)
+{
+	return (input->move_forward || input->move_backward
+		|| input->strafe_left || input->strafe_right
+		|| input->turn_left || input->turn_right);
+}
+
+/**
  * @brief 1フレーム分の更新と描画を行う
  *
  * 終了要求があれば停止を返し、時刻取得に失敗した場合は異常終了を返す。
  * 正常時はdelta timeを更新し、プレイヤー更新と描画を1フレーム分実行する。
  * 返り値駆動にすることで,終了コードや片付け方は呼び出し元が選べる.
+ *
+ * 描画は常に毎フレーム行うのではなく,次のいずれかを満たしたときだけ実行する。
+ *
+ * - 初回フレームでまだ画面が一度も出ていない
+ * - キー入力によりプレイヤー状態が継続的に変化しうる
+ * - マウス差分がこのフレームで視点へ適用された
+ *
+ * これにより,特にLinux/X11環境で「無入力でも毎フレーム再描画する」負荷を避ける.
  *
  * @param[in,out] game ゲーム状態
  * @retval GAME_TICK_CONTINUE 正常に1フレーム処理した
@@ -86,12 +115,19 @@ static bool	update_frame_clock(t_frame_clock *clock)
  */
 t_game_tick_status	game_loop_tick(t_game *game)
 {
+	bool	should_render;
+
 	if (game->input.quit || !game->running)
 		return (GAME_TICK_STOP);
 	if (!update_frame_clock(&game->clock))
 		return (GAME_TICK_ERROR);
+	mouse_update(game);
 	update_player(&game->player, &game->input,
 		&game->config.map, game->clock.delta_sec);
-	render_frame(game);
+	should_render = (game->clock.frame_index == 1
+			|| has_active_input(&game->input)
+			|| game->mouse.moved_this_frame);
+	if (should_render)
+		render_frame(game);
 	return (GAME_TICK_CONTINUE);
 }

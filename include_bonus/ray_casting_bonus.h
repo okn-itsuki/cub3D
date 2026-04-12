@@ -10,9 +10,9 @@
  * 数学的には,2Dベクトル演算,回転行列,DDA,テクスチャ座標補間が主役になる.
  */
 #ifndef BONUS_RAY_CASTING_H
-#define BONUS_RAY_CASTING_H
+# define BONUS_RAY_CASTING_H
 
-#include "cub3d_bonus.h"
+# include "cub3d_bonus.h"
 
 /**
  * @brief 1フレーム更新処理の結果を表す列挙体
@@ -28,6 +28,7 @@ void	cast_ray(t_ray *ray, const t_player *player, const t_map *map,
 			int col);
 void	render_column(t_render *render, const t_assets *assets);
 void	render_frame(t_game *game);
+void	rotate_player(t_player *player, double angle);
 void	update_player(t_player *player, const t_input *input,
 			const t_map *map, double dt);
 t_game_tick_status	game_loop_tick(t_game *game);

@@ -55,6 +55,9 @@ BUILD_TAG := $(BUILD_MODE)
 ifneq ($(strip $(DEBUG_BUILD)),)
 BUILD_TAG := $(BUILD_TAG)_debug
 endif
+ifneq ($(strip $(DASHBOARD_BUILD)),)
+BUILD_TAG := $(BUILD_TAG)_dashboard
+endif
 
 OBJ_DIR := $(OBJ_ROOT)/$(BUILD_TAG)
 MODE_BINARY := $(OBJ_DIR)/$(NAME)

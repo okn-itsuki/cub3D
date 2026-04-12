@@ -3,12 +3,12 @@
 /obj/
 /minilibx-macos/
 /minilibx-linux/
-/minilibx_opengl_20191021/*.o
-/minilibx_opengl_20191021/libmlx.a
-/minilibx_opengl_20191021/mlx_app
+/minilibx_opengl_20191021/
 /libft/libft.a
 /libft/obj/
 /sandbox/render/render_sandbox
 /sandbox/render/obj/
 /docs/html/
 /docs/latex/
+/docs_bonus/html/
+/docs_bonus/latex/
