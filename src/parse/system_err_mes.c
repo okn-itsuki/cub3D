@@ -16,7 +16,8 @@ t_system_err	open_file(const char *path, int *fd)
 	return (SUCCESS);
 }
 
-t_system_err	read_file_buf(int fd, char *buf, size_t buf_size, ssize_t *read_size)
+t_system_err	read_file_buf(int fd,
+	char *buf, size_t buf_size, ssize_t *read_size)
 {
 	*read_size = read(fd, buf, buf_size);
 	if (*read_size < 0)

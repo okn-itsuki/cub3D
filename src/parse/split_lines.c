@@ -3,8 +3,9 @@
 #include "libft.h"
 #include "parse.h"
 
-static int	count_lines(const char *s);
-static void	free_partial_lines(char **lines, int count);
+static int			count_lines(const char *s);
+static void			free_partial_lines(char **lines, int count);
+static t_system_err	fill_lines(char **result, const char *content);
 
 /**
  * @brief 改行区切りの文字列を NULL 終端の行配列へ分割します。
@@ -19,11 +20,8 @@ static void	free_partial_lines(char **lines, int count);
  */
 t_system_err	split_lines(const char *content, char ***lines)
 {
-	char	**result;
-	const char	*start;
-	const char	*end;
-	int		i;
-	int		line_count;
+	char		**result;
+	int			line_count;
 
 	if (content == NULL || lines == NULL)
 		return (READ_ERR);
@@ -34,6 +32,18 @@ t_system_err	split_lines(const char *content, char ***lines)
 	result = malloc(sizeof(char *) * ((size_t)line_count + 1));
 	if (result == NULL)
 		return (malloc_err());
+	if (fill_lines(result, content) != SUCCESS)
+		return (MALLOC_ERR);
+	*lines = result;
+	return (SUCCESS);
+}
+
+static t_system_err	fill_lines(char **result, const char *content)
+{
+	const char	*start;
+	const char	*end;
+	int			i;
+
 	i = 0;
 	start = content;
 	end = ft_strchr(start, '\n');
@@ -49,9 +59,7 @@ t_system_err	split_lines(const char *content, char ***lines)
 	result[i] = ft_strdup(start);
 	if (result[i] == NULL)
 		return (free_partial_lines(result, i), malloc_err());
-	i++;
-	result[i] = NULL;
-	*lines = result;
+	result[i + 1] = NULL;
 	return (SUCCESS);
 }
 

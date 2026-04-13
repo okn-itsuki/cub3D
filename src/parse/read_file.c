@@ -7,6 +7,8 @@
 #define BUF_SIZE 4096
 
 static t_system_err	read_fd(int fd, char **content);
+static t_system_err	read_next_chunk(int fd, char **content, char *buf,
+						ssize_t *read_size);
 static t_system_err	append_buf(char **content, char *buf, ssize_t read_size);
 
 /**
@@ -32,9 +34,7 @@ t_system_err	read_file_lines(const char *path, char ***ptr)
 	if (path == NULL || ptr == NULL)
 		return (READ_ERR);
 	*ptr = NULL;
-	fd = -1;
 	content = NULL;
-	lines = NULL;
 	state = open_file(path, &fd);
 	if (state != SUCCESS)
 		return (state);
@@ -94,6 +94,23 @@ static t_system_err	append_buf(char **content, char *buf, ssize_t read_size)
 	return (SUCCESS);
 }
 
+static t_system_err	read_next_chunk(int fd, char **content, char *buf,
+	ssize_t *read_size)
+{
+	t_system_err	state;
+
+	state = read_file_buf(fd, buf, BUF_SIZE, read_size);
+	if (state != SUCCESS)
+	{
+		free(*content);
+		*content = NULL;
+		return (state);
+	}
+	if (*read_size == 0)
+		return (SUCCESS);
+	return (append_buf(content, buf, *read_size));
+}
+
 /**
  * @brief 開かれているファイルディスクリプタから全文を 1 つの文字列として読み込みます。
  *
@@ -113,25 +130,11 @@ static t_system_err	read_fd(int fd, char **content)
 	*content = ft_strdup("");
 	if (*content == NULL)
 		return (malloc_err());
-	state = read_file_buf(fd, buf, BUF_SIZE, &read_size);
+	read_size = 1;
+	state = SUCCESS;
+	while (read_size > 0 && state == SUCCESS)
+		state = read_next_chunk(fd, content, buf, &read_size);
 	if (state != SUCCESS)
-	{
-		free(*content);
-		*content = NULL;
 		return (state);
-	}
-	while (read_size > 0)
-	{
-		state = append_buf(content, buf, read_size);
-		if (state != SUCCESS)
-			return (state);
-		state = read_file_buf(fd, buf, BUF_SIZE, &read_size);
-		if (state != SUCCESS)
-		{
-			free(*content);
-			*content = NULL;
-			return (state);
-		}
-	}
 	return (SUCCESS);
 }
