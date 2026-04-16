@@ -3,7 +3,8 @@
 #include <stdio.h>
 
 // 概要 : t_config 全体をまとめて表示する
-
+// - manko
+// - chinko
 void	print_config(const t_config *config)
 {
 	printf("=== t_config ===\n");
