@@ -1,14 +1,19 @@
+#include "parse.h"
 #include "parse_test.h"
-#include "../include/cub_config.h"
 #include <stdio.h>
 
-int main(int ac, char **av)
+int	main(int ac, char **av)
 {
-	t_config *config;
-	(void)ac;
-	(void)av;
-//TODO : パースする関数を入れる
-	print_config(config);
+	t_config	config;
 
-	return 0;
+	if (ac != 2)
+	{
+		fprintf(stderr, "Usage: %s <map.cub>\n", av[0]);
+		return (1);
+	}
+	if (!parse_cub(av[1], &config))
+		return (1);
+	print_config(&config);
+	free_config(&config);
+	return (0);
 }
