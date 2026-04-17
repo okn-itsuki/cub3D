@@ -6,10 +6,10 @@
 
 #define BUF_SIZE 4096
 
-static t_system_err	read_fd(int fd, char **content);
-static t_system_err	read_next_chunk(int fd, char **content, char *buf,
+static t_excepion	read_fd(int fd, char **content);
+static t_excepion	read_next_chunk(int fd, char **content, char *buf,
 						ssize_t *read_size);
-static t_system_err	append_buf(char **content, char *buf, ssize_t read_size);
+static t_excepion	append_buf(char **content, char *buf, ssize_t read_size);
 
 /**
  * @brief ファイルを読み込み、NULL 終端の行配列へ分割します。
@@ -24,12 +24,12 @@ static t_system_err	append_buf(char **content, char *buf, ssize_t read_size);
  * @retval MALLOC_ERR 読み込みまたは分割中のメモリ確保に失敗した場合。
  * @retval OVFL_ERR 行数が扱える範囲を超えた場合。
  */
-t_system_err	read_file_lines(const char *path, char ***ptr)
+t_excepion	read_file_lines(const char *path, char ***ptr)
 {
 	int				fd;
 	char			*content;
 	char			**lines;
-	t_system_err	state;
+	t_excepion	state;
 
 	if (path == NULL || ptr == NULL)
 		return (READ_ERR);
@@ -81,7 +81,7 @@ void	free_lines(char **lines)
  * @retval SUCCESS 文字列の連結に成功した場合。
  * @retval MALLOC_ERR 文字列連結時のメモリ確保に失敗した場合。
  */
-static t_system_err	append_buf(char **content, char *buf, ssize_t read_size)
+static t_excepion	append_buf(char **content, char *buf, ssize_t read_size)
 {
 	char	*tmp;
 
@@ -94,10 +94,10 @@ static t_system_err	append_buf(char **content, char *buf, ssize_t read_size)
 	return (SUCCESS);
 }
 
-static t_system_err	read_next_chunk(int fd, char **content, char *buf,
+static t_excepion	read_next_chunk(int fd, char **content, char *buf,
 	ssize_t *read_size)
 {
-	t_system_err	state;
+	t_excepion	state;
 
 	state = read_file_buf(fd, buf, BUF_SIZE, read_size);
 	if (state != SUCCESS)
@@ -121,11 +121,11 @@ static t_system_err	read_next_chunk(int fd, char **content, char *buf,
  * @retval READ_ERR read() に失敗した場合。
  * @retval MALLOC_ERR 内容構築中のメモリ確保に失敗した場合。
  */
-static t_system_err	read_fd(int fd, char **content)
+static t_excepion	read_fd(int fd, char **content)
 {
 	char			buf[BUF_SIZE + 1];
 	ssize_t			read_size;
-	t_system_err	state;
+	t_excepion	state;
 
 	*content = ft_strdup("");
 	if (*content == NULL)
