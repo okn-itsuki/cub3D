@@ -18,10 +18,9 @@ static t_excepion	is_valid_texture_path(char *path);
  * @param line `NO` `SO` `WE` `EA` のいずれかで始まる行。
  * @param config テクスチャパスの保存先。
  *
- * @retval true テクスチャ識別子と `.xpm` パスを
- * 正しく解析できた場合。
- * @retval false 重複、欠落、不正パス、
- * またはメモリ確保失敗時。
+ * @retval INVALID_STRING マップエラー重複、欠落、不正パス
+ * @retval MLLOC_FAIL　メモリ確保失敗時。
+ * @retval SUCCESS textureの格納に成功
  */
 t_excepion	parse_texture_line(const char *line, t_config *config)
 {
@@ -63,14 +62,15 @@ static int	get_tex_id(const char *line)
  * @param line テクスチャ識別子を含む入力行。
  * @param tex_id 保存先テクスチャスロットの index。
  * @param config テクスチャパスの保存先。
- *
- * @retval true パスの複製と妥当性検証に成功した場合。
- * @retval false パス欠落、妥当性不正、確保失敗があった場合。
+ * 
+ * @retval INVALID_STRING マップエラー重複、欠落、不正パス
+ * @retval MLLOC_FAIL　メモリ確保失敗時。
+ * @retval SUCCESS textureの格納に成功
  */
 static t_excepion	set_texture_path(const char *line, int tex_id, t_config *config)
 {
-	char	*path;
-	t_excepion state;
+	char		*path;
+	t_excepion	state;
 
 	state = dup_texture_path(parse_skip_spaces(path, line + TEX_ID_LEN));
 	if (state != SUCCESS)
@@ -89,8 +89,10 @@ static t_excepion	set_texture_path(const char *line, int tex_id, t_config *confi
  * @brief 行末空白を除いたテクスチャパス文字列を複製します。
  *
  * @param line 識別子と空白を読み飛ばした後のパス文字列。
- *
- * @return 複製したパス文字列。パスが空、または確保失敗時は `NULL`。
+ * 
+ * @retval INVALID_STRING マップエラー重複、欠落、不正パス
+ * @retval MLLOC_FAIL　メモリ確保失敗時。
+ * @retval SUCCESS textureの格納に成功
  */
 static t_excepion dup_texture_path(char *path, const char *line)
 {
@@ -114,13 +116,14 @@ static t_excepion dup_texture_path(char *path, const char *line)
  * @brief テクスチャパスの形式を検証します。
  *
  * @param path 検証対象のテクスチャパス。
- *
- * @retval true 空白を含まず `.xpm` で終わる正しいパスの場合。
- * @retval false NULL、空白混在、拡張子不正、末尾 `/` の場合。
+ * @retval INVALID_STRING NULL、空白混在、拡張子不正、末尾 `/` の場合。
+ * @retval INVALID_STRING 空白を含まず `.xpm` で終わる正しいパスの場合。
+ * @retval MLLOC_FAIL　メモリ確保失敗時。
+ * @retval SUCCESS textureの格納に成功
  */
 static t_excepion	is_valid_texture_path(char *path)
 {
-	t_excepion state;
+	t_excepion	state;
 	if ( state != SUCCESS)
 		return (malloc_err());
 // TODO : issue33 例外内容増やす
