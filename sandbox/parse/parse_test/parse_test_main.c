@@ -14,6 +14,6 @@ int	main(int ac, char **av)
 	if (!parse_cub(av[1], &config))
 		return (1);
 	print_config(&config);
-	free_config(&config);
+	destroy_config(&config);
 	return (0);
 }
