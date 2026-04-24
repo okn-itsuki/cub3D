@@ -59,3 +59,15 @@ t_excepion excepiom_texture(const char *message)
 	ft_putstr_fd((char *)message,STDERR_FILENO);
 	return (TEX_ERR);
 }
+
+t_excepion excepion_color(const char *message)
+{
+	ft_putstr_fd((char *)message,STDERR_FILENO);
+	return (COLOR_ERR);
+}
+
+t_excepion excepiom_message(const char *message, t_excepion state)
+{
+	ft_putstr_fd((char *)message, STDERR_FILENO);
+	return (state);
+}
