@@ -8,7 +8,13 @@ typedef enum s_sytem_err
 	OVFL_ERR,
 	OPEN_ERR,
 	READ_ERR,
-	MALLOC_ERR
-}t_system_err;
+	MALLOC_ERR,
+	INVALID_STRING,
+	TEX_ERR,
+	COLOR_ERR,
+	MAP_ERR
+}	t_system_err;
+
+typedef t_system_err	t_excepion;
 
 #endif

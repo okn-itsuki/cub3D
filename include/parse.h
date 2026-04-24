@@ -20,5 +20,15 @@ t_system_err	open_file(const char *path, int *fd);
 t_system_err	read_file_buf(int fd, char *buf, size_t buf_size, ssize_t *read_size);
 t_system_err	close_file(int fd);
 t_system_err	malloc_err(void);
+t_excepion		excepion_map(const char *message);
+t_excepion		excepion_color(const char *message);
+
+// parse_utils.c
+const char		*parse_skip_spaces(const char *str);
+bool			parse_is_blank_line(const char *line);
+
+// parse_map.c
+t_excepion		parse_map_lines(char **lines, int start, int end,
+					t_config *config);
 
 #endif

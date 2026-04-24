@@ -46,3 +46,17 @@ t_system_err	malloc_err(void)
 	ft_putstr_fd("memory allocation failed\n", STDERR_FILENO);
 	return (MALLOC_ERR);
 }
+
+t_excepion	excepion_map(const char *message)
+{
+	ft_putstr_fd("Error\n", STDERR_FILENO);
+	ft_putstr_fd((char *)message, STDERR_FILENO);
+	return (MAP_ERR);
+}
+
+t_excepion	excepion_color(const char *message)
+{
+	ft_putstr_fd("Error\n", STDERR_FILENO);
+	ft_putstr_fd((char *)message, STDERR_FILENO);
+	return (COLOR_ERR);
+}
