@@ -10,8 +10,9 @@
  * @param line 解析対象のヘッダ行。
  * @param config 解析結果の格納先。
  *
- * @retval true 行の解析に成功した場合。
- * @retval false 行種別不正または要素解析に失敗した場合。
+ * @retval INVALID_STRING マップエラー重複、欠落、不正パス
+ * @retval MLLOC_FAIL　メモリ確保失敗時。
+ * @retval SUCCESS textureの格納に成功
  */
 t_excepion	parse_header_line(const char *line, t_config *config)
 {
@@ -32,9 +33,9 @@ t_excepion	parse_header_line(const char *line, t_config *config)
  * @brief 必須ヘッダ 6 要素がすべて設定済みか判定します。
  *
  * @param config 判定対象の設定構造体。
- *
- * @retval true テクスチャ 4 枚と床・天井色が揃っている場合。
- * @retval false いずれかが未設定の場合。
+ * @retval INVALID_STRING テクスチャ 4 枚と床・天井色いずれかが未設定の場合。
+ * @retval MLLOC_FAIL　メモリ確保失敗時。
+ * @retval SUCCESS 格納に成功
  */
 t_excepion parse_all_headers_set(const t_config *config)
 {

@@ -10,7 +10,8 @@ typedef enum s_excepion
 	READ_ERR,
 	MALLOC_FAIL,
 	INVALID_STRING,
-	TEX_ERR
+	TEX_ERR,
+	COLOR_ERR
 } t_excepion;
 
 #endif
