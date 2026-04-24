@@ -40,12 +40,19 @@ t_excepion	close_file(int fd)
 	return (SUCCESS);
 }
 
-// TODO : malloc_excepion に名前変更
 t_excepion	malloc_err(void)
 {
 	ft_putstr_fd("Error\n", STDERR_FILENO);
 	ft_putstr_fd("memory allocation failed\n", STDERR_FILENO);
 	return (MALLOC_FAIL);
+}
+
+t_excepion	excepion_map(const char *message)
+{
+	ft_putstr_fd("Error\n", STDERR_FILENO);
+	ft_putstr_fd((char *)message, STDERR_FILENO);
+	return (COLOR_ERR);
+// TODO add MAP_ERR 
 }
 
 t_excepion excepiom_argment(const char *message)
