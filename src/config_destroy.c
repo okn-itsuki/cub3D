@@ -2,7 +2,7 @@
  * @file config_destroy.c
  * @brief `t_config`が所有する動的メモリの解放
  */
-#include "game_init.h"
+#include "cub_config.h"
 #include <stdlib.h>
 
 /**
