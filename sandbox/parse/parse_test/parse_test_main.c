@@ -11,7 +11,7 @@ int	main(int ac, char **av)
 		fprintf(stderr, "Usage: %s <map.cub>\n", av[0]);
 		return (1);
 	}
-	if (!parse_cub(av[1], &config))
+	if (parse_cub(av[1], &config) != SUCCESS)
 		return (1);
 	print_config(&config);
 	destroy_config(&config);

@@ -51,17 +51,17 @@ t_excepion	excepion_map(const char *message)
 {
 	ft_putstr_fd("Error\n", STDERR_FILENO);
 	ft_putstr_fd((char *)message, STDERR_FILENO);
-	return (COLOR_ERR);
-// TODO add MAP_ERR 
+	return (MAP_ERR);
+// TODO add MAP_ERR
 }
 
-t_excepion excepiom_argment(const char *message)
+t_excepion excepion_argment(const char *message)
 {
 	ft_putstr_fd((char *)message,STDERR_FILENO);
 	return (INVALID_STRING);
 }
 
-t_excepion excepiom_texture(const char *message)
+t_excepion excepion_texture(const char *message)
 {
 	ft_putstr_fd((char *)message,STDERR_FILENO);
 	return (TEX_ERR);
@@ -73,7 +73,7 @@ t_excepion excepion_color(const char *message)
 	return (COLOR_ERR);
 }
 
-t_excepion excepiom_message(const char *message, t_excepion state)
+t_excepion excepion_message(const char *message, t_excepion state)
 {
 	ft_putstr_fd((char *)message, STDERR_FILENO);
 	return (state);

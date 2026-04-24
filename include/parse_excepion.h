@@ -4,14 +4,18 @@
 typedef enum s_excepion
 {
 	SUCCESS,
+	ARG_NULL = 50,
+	EXTENSION_ERR,
 	CLOSE_ERR,
 	OVFL_ERR,
 	OPEN_ERR,
 	READ_ERR,
 	MALLOC_FAIL,
 	INVALID_STRING,
+	COLOR_ERR,
 	TEX_ERR,
-	COLOR_ERR
+	MAP_ERR,
+	Draft
 } t_excepion;
 
 #endif

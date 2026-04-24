@@ -4,7 +4,7 @@
  */
 #include "parse.h"
 
-static bool	fill_config_from_lines(char **lines, t_config *config);
+static t_excepion	fill_config_from_lines(char **lines, t_config *config);
 
 /**
  * @brief `.cub` ファイルを読み込み `t_config` を構築します。
@@ -15,28 +15,29 @@ static bool	fill_config_from_lines(char **lines, t_config *config);
  * @retval true パースが成功した場合。
  * @retval false 拡張子不正、読み込み失敗、構文エラー、またはメモリ確保失敗時。
  */
-bool	parse_cub(const char *path, t_config *config)
+t_excepion	parse_cub(const char *path, t_config *config)
 {
 	char			**lines;
-	t_system_err	state;
+	t_excepion	state;
 
 	if (path == NULL || config == NULL)
-		return (parse_put_error("parse arguments are invalid"));
+		return (excepion_message("parse arguments are invalid",ARG_NULL));
 	init_config(config);
 	if (!parse_extension(path, ".cub"))
-		return (parse_put_error("map file must end with .cub"));
+		return (excepion_message("map file must end with .cub",EXTENSION_ERR));
 	lines = NULL;
 	state = read_file_lines(path, &lines);
 	if (state != SUCCESS)
-		return (false);
-	if (!fill_config_from_lines(lines, config))
+		return (state);
+	state = fill_config_from_lines(lines, config);
+	if (state != SUCCESS)
 	{
 		free_lines(lines);
 		destroy_config(config);
-		return (false);
+		return (state);
 	}
 	free_lines(lines);
-	return (true);
+	return (SUCCESS);
 }
 
 /**
@@ -48,10 +49,11 @@ bool	parse_cub(const char *path, t_config *config)
  * @retval true ヘッダ・マップが正当で `config` のメンバに値を格納しきった場合。
  * @retval false `.cub` のレイアウト不正や要素不足、マップ不正があった場合。
  */
-static bool	fill_config_from_lines(char **lines, t_config *config)
+static t_excepion	fill_config_from_lines(char **lines, t_config *config)
 {
 	int					index;
 	int					map_start;
+	t_excepion			state;
 	t_parse_line_type	type;
 
 	index = 0;
@@ -69,18 +71,19 @@ static bool	fill_config_from_lines(char **lines, t_config *config)
 			 * 必要機能: 要素種別の判定、書式検証、重複検出、
 			 * 設定値の保存をまとめて行うこと。
 			 */
-			if (TODO)
-				return (false);
+			state = parse_header_line(lines[index], config);
+			if (state != SUCCESS)
+				return (state);
 			index++;
 		}
 		/* 必須ヘッダが出そろったかを判定する処理。
 		 * 必要機能: マップ開始判定の前提として、
 		 * 必須 6 要素の充足状態を一貫して返すこと。
 		 */
-		else if (TODO && type == LINE_MAP)
+		else if (parse_all_headers_set(config) == SUCCESS && type == LINE_MAP)
 			map_start = index;
 		else
-			return (parse_put_error("invalid .cub layout"));
+			return (excepion_message("invalid .cub layout",Draft));
 	}
 	if (map_start < 0)
 		map_start = index;
@@ -90,19 +93,20 @@ static bool	fill_config_from_lines(char **lines, t_config *config)
 	 * 必要機能: マップ解析に進む前に、
 	 * 未設定要素の有無を確実に検出すること。
 	 */
-	if (TODO)
-		return (parse_put_error("required identifiers are missing"));
+	if (parse_all_headers_set(config) != SUCCESS)
+		return (excepion_message("required identifiers are missing", Draft));
 	/* マップ領域を構築し妥当性検証まで完了する処理。
 	 * 必要機能: 行の保持、スポーン抽出、文字検証、
 	 * 閉塞判定を行い、成功時だけ設定へ反映すること。
 	 */
-	if (TODO)
-		return (false);
+	state = parse_map_lines(lines, map_start, index, config);
+	if (state != SUCCESS)
+		return (state);
 	while (lines[index] != NULL)
 	{
 		if (!parse_is_blank_line(lines[index]))
-			return (parse_put_error("content after map is invalid"));
+			return (excepion_message("content after map is invalid",Draft));
 		index++;
 	}
-	return (true);
+	return (SUCCESS);
 }

@@ -7,7 +7,7 @@
 
 static t_excepion	parse_rgb(const char *value, t_rgb *rgb);
 static t_excepion	parse_rgb_values(const char **value, int *components);
-static bool			parse_rgb_component(const char **value, int *out);
+static t_excepion	parse_rgb_component(const char **value, int *out);
 
 /**
  * @brief F または C の色指定行を解析する。
@@ -86,13 +86,15 @@ static t_excepion	parse_rgb(const char *value, t_rgb *rgb)
  */
 static t_excepion	parse_rgb_values(const char **value, int *components)
 {
-	int	index;
+	int			index;
+	t_excepion	state;
 
 	index = 0;
 	while (index < 3)
 	{
-		if (!parse_rgb_component(value, &components[index]))
-			return (excepion_color("invalid rgb value\n"));
+		state = parse_rgb_component(value, &components[index]);
+		if (state != SUCCESS)
+			return (state);
 		*value = parse_skip_spaces(*value);
 		if (index < 2 && **value != ',')
 			return (excepion_color("rgb must contain 3 components\n"));
@@ -115,37 +117,18 @@ static t_excepion	parse_rgb_values(const char **value, int *components)
  * @retval true 成分を正常に読み取れた場合
  * @retval false 数字がない、または 255 を超えた場合
  */
-static bool	parse_rgb_component(const char **value, int *out)
+static t_excepion	parse_rgb_component(const char **value, int *out)
 {
-	int	result;
+	int result;
 
 	if (!ft_isdigit((unsigned char)**value))
-		return (false);
+		return (excepion_message("Color code must be numeric.", Draft));
 	result = 0;
 	while (ft_isdigit((unsigned char)**value))
 	{
 		result = result * 10 + (**value - '0');
 		if (result > 255)
-			return (false);
-		(*value)++;
-	}
-	*out = result;
-	return (true);
-}
-
-static t_excepion	parse_rgb_component(const char **value, int *out)
-{
-	int result;
-	t_excepion state;
-
-	if (!ft_isdigit((unsigned char)**value))
-		return (excepiom_message("Color code must be numeric.", CLOSE_ERR));	
-	result = 0;
-	while (ft_isdigit(unsigned char)**value)
-	{
-		result = result * 10 + (**value - '0');
-		if (result > 255)
-			return (excepiom_message("Color code must be 0-255.", CLOSE_ERR));
+			return (excepion_message("Color code must be 0-255.", OVFL_ERR));
 		(*value)++;
 	}
 	*out = result;

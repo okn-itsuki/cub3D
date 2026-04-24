@@ -17,7 +17,6 @@
 t_excepion	parse_header_line(const char *line, t_config *config)
 {
 	t_parse_line_type	type;
-	t_excepion			state;
 
 	type = parse_get_line_type(line);
 	if (type == LINE_TEXTURE)
@@ -25,7 +24,7 @@ t_excepion	parse_header_line(const char *line, t_config *config)
 // TODO : color parse 実装
 	if (type == LINE_COLOR)
 		return (parse_color_line(line, config));
-// TODO : 例外内容増やす 
+// TODO : 例外内容増やす
 	return (excepion_argment("invalid header line"));
 }
 
@@ -44,14 +43,14 @@ t_excepion parse_all_headers_set(const t_config *config)
 	index = 0;
 	while (index < TEX_COUNT)
 	{
-// TODO : issue33 
+// TODO : issue33
 		if (config->tex.path[index] == NULL)
-			return (excepiom_texture("Required texture images are missing.\n"));
+			return (excepion_texture("Required texture images are missing.\n"));
 		index++;
 	}
 	if (!config->floor_color.is_set )
-		return (excepiom_texture("Floor color has not been specified."));
+		return (excepion_texture("Floor color has not been specified."));
 	if (!config->ceiling_color.is_set)
-		return (excepiom_texture("Ceiling color has not been specified."));
+		return (excepion_texture("Ceiling color has not been specified."));
 	return (SUCCESS);
 }

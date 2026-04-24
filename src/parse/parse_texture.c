@@ -8,7 +8,7 @@
 
 static int			get_tex_id(const char *line);
 static t_excepion	set_texture_path(const char *line, int tex_id, t_config *config);
-static t_excepion	dup_texture_path(const char *line);
+static t_excepion	dup_texture_path(char **path, const char *line);
 static t_excepion	is_valid_texture_path(char *path);
 
 /**
@@ -17,7 +17,6 @@ static t_excepion	is_valid_texture_path(char *path);
  *
  * @param line `NO` `SO` `WE` `EA` のいずれかで始まる行。
  * @param config テクスチャパスの保存先。
- *
  * @retval INVALID_STRING マップエラー重複、欠落、不正パス
  * @retval MLLOC_FAIL　メモリ確保失敗時。
  * @retval SUCCESS textureの格納に成功
@@ -30,9 +29,9 @@ t_excepion	parse_texture_line(const char *line, t_config *config)
 	tex_id = get_tex_id(line);
 // TODO : issue33 例外の種類を増やす？
 	if (tex_id < 0)
-		return (excepiom_argment("unknown texture identifier"));
+		return (excepion_argment("unknown texture identifier"));
 	if (config->tex.path[tex_id] != NULL)
-		return (excepiom_argment("duplicate texture identifier"))
+		return (excepion_argment("duplicate texture identifier"));
 	return (set_texture_path(line, tex_id, config));
 }
 
@@ -62,7 +61,7 @@ static int	get_tex_id(const char *line)
  * @param line テクスチャ識別子を含む入力行。
  * @param tex_id 保存先テクスチャスロットの index。
  * @param config テクスチャパスの保存先。
- * 
+ *
  * @retval INVALID_STRING マップエラー重複、欠落、不正パス
  * @retval MLLOC_FAIL　メモリ確保失敗時。
  * @retval SUCCESS textureの格納に成功
@@ -72,11 +71,12 @@ static t_excepion	set_texture_path(const char *line, int tex_id, t_config *confi
 	char		*path;
 	t_excepion	state;
 
-	state = dup_texture_path(parse_skip_spaces(path, line + TEX_ID_LEN));
+	path = NULL;
+	state = dup_texture_path(&path, parse_skip_spaces(line + TEX_ID_LEN));
 	if (state != SUCCESS)
 		return (state);
 	state = is_valid_texture_path(path);
-	if (state != SUCCESS)
+	if (state != SUCCESS) 
 	{
 		free(path);
 		return (state);
@@ -89,25 +89,23 @@ static t_excepion	set_texture_path(const char *line, int tex_id, t_config *confi
  * @brief 行末空白を除いたテクスチャパス文字列を複製します。
  *
  * @param line 識別子と空白を読み飛ばした後のパス文字列。
- * 
+ *
  * @retval INVALID_STRING マップエラー重複、欠落、不正パス
  * @retval MLLOC_FAIL　メモリ確保失敗時。
  * @retval SUCCESS textureの格納に成功
  */
-static t_excepion dup_texture_path(char *path, const char *line)
+static t_excepion dup_texture_path(char **path, const char *line)
 {
 	size_t		len;
-	char		*res;
-	t_excepion	state;
 
 	len = ft_strlen(line);
 	while (len > 0 && ft_isspace((unsigned char)line[len - 1]))
 		len--;
 // TODO : issue33 例外の種類を増やす？
 	if (len == 0)
-		return (excepiom_argment("texture path is missing"));
-	path = ft_substr(line, 0, len);
-	if (path == NULL)
+		return (excepion_argment("texture path is missing"));
+	*path = ft_substr(line, 0, len);
+	if (*path == NULL)
 		return (malloc_err());
 	return (SUCCESS);
 }
@@ -123,15 +121,9 @@ static t_excepion dup_texture_path(char *path, const char *line)
  */
 static t_excepion	is_valid_texture_path(char *path)
 {
-	t_excepion	state;
-	if ( state != SUCCESS)
-		return (malloc_err());
-// TODO : issue33 例外内容増やす
-// - texture path is invalid
-// - texture path must end with .xpm
 	if (ft_strchr(path, ' ') != NULL || ft_strchr(path, '\t') != NULL)
-		return (excepiom_argment("texture path is invalid"));
+		return (excepion_argment("texture path is invalid"));
 	if (!parse_extension(path, ".xpm") || path[ft_strlen(path) - 1] == '/')
-		return (excepiom_argment("texture path must end with .xpm"));
-	return (true);
+		return (excepion_argment("texture path must end with .xpm"));
+	return (SUCCESS);
 }
