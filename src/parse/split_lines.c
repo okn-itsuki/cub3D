@@ -5,7 +5,7 @@
 
 static int			count_lines(const char *s);
 static void			free_partial_lines(char **lines, int count);
-static t_system_err	fill_lines(char **result, const char *content);
+static t_excepion	fill_lines(char **result, const char *content);
 
 /**
  * @brief 改行区切りの文字列を NULL 終端の行配列へ分割します。
@@ -18,7 +18,7 @@ static t_system_err	fill_lines(char **result, const char *content);
  * @retval OVFL_ERR 行数が扱える範囲を超えた場合。
  * @retval MALLOC_ERR 行文字列の複製中にメモリ確保へ失敗した場合。
  */
-t_system_err	split_lines(const char *content, char ***lines)
+t_excepion	split_lines(const char *content, char ***lines)
 {
 	char		**result;
 	int			line_count;
@@ -33,12 +33,12 @@ t_system_err	split_lines(const char *content, char ***lines)
 	if (result == NULL)
 		return (malloc_err());
 	if (fill_lines(result, content) != SUCCESS)
-		return (MALLOC_ERR);
+		return (MALLOC_FAIL);
 	*lines = result;
 	return (SUCCESS);
 }
 
-static t_system_err	fill_lines(char **result, const char *content)
+static t_excepion	fill_lines(char **result, const char *content)
 {
 	const char	*start;
 	const char	*end;
