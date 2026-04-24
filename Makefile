@@ -1,6 +1,5 @@
 NAME := cub3D
 
-SRC_DIR := src
 INCLUDE_DIR := include
 OBJ_DIR := obj
 LIBFT_DIR := libft
@@ -8,13 +7,25 @@ LIBFT_DIR := libft
 CC := cc
 RM := rm -f
 RMDIR := rm -rf
-UNAME_S := $(shell uname -s)
 
-SRC := $(shell find $(SRC_DIR) -type f -name '*.c' 2>/dev/null)
-OBJ := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
+SRC := \
+	src/main.c \
+	src/config_destroy.c \
+	src/map_access.c \
+	src/parse/init_config.c \
+	src/parse/parse.c \
+	src/parse/parse_elements.c \
+	src/parse/parse_color.c \
+	src/parse/parse_map.c \
+	src/parse/parse_texture.c \
+	src/parse/parse_utils.c \
+	src/parse/read_file.c \
+	src/parse/split_lines.c \
+	src/parse/system_err_mes.c
+OBJ := $(patsubst src/%.c,$(OBJ_DIR)/%.o,$(SRC))
 DEP := $(OBJ:.o=.d)
 
-CPPFLAGS := -I$(INCLUDE_DIR) -I$(SRC_DIR)
+CPPFLAGS := -I$(INCLUDE_DIR) -Isrc
 CFLAGS := -Wall -Wextra -Werror
 DEPFLAGS := -MMD -MP
 LDFLAGS :=
@@ -23,21 +34,6 @@ LDLIBS :=
 ifneq ($(strip $(DEBUG)),)
 CFLAGS += -g3 -O0
 endif
-
-ifeq ($(UNAME_S),Darwin)
-MLX_DIR := minilibx_opengl_20191021
-LDLIBS += -lmlx -framework OpenGL -framework AppKit
-else ifeq ($(UNAME_S),Linux)
-MLX_DIR := minilibx-linux
-MLX_REPO := https://github.com/42Paris/minilibx-linux.git
-LDLIBS += -lmlx -lXext -lX11 -lm -lz
-else
-$(error Unsupported platform: $(UNAME_S))
-endif
-
-MLX := $(MLX_DIR)/libmlx.a
-CPPFLAGS += -I$(MLX_DIR)
-LDFLAGS += -L$(MLX_DIR)
 
 ifneq ($(wildcard $(LIBFT_DIR)/Makefile),)
 LIBFT := $(LIBFT_DIR)/libft.a
@@ -48,20 +44,12 @@ endif
 
 all: $(NAME)
 
-$(NAME): $(MLX) $(LIBFT) $(OBJ)
+$(NAME): $(LIBFT) $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: src/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
-
-ifneq ($(MLX_REPO),)
-$(MLX_DIR):
-	git clone $(MLX_REPO) $(MLX_DIR)
-endif
-
-$(MLX): | $(MLX_DIR)
-	$(MAKE) -C $(MLX_DIR)
 
 ifneq ($(wildcard $(LIBFT_DIR)/Makefile),)
 $(LIBFT):
@@ -70,7 +58,6 @@ endif
 
 clean:
 	@if [ -d "$(LIBFT_DIR)" ]; then $(MAKE) -C $(LIBFT_DIR) clean; fi
-	@if [ -d "$(MLX_DIR)" ]; then $(MAKE) -C $(MLX_DIR) clean; fi
 	$(RMDIR) $(OBJ_DIR)
 
 fclean: clean
