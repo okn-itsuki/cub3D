@@ -11,7 +11,22 @@ static void	print_rgb(const char *label, const t_rgb *color)
 		printf("[%s]  (unset)\n", label);
 }
 
-// 概要 : 床色・天井色 (F/C) を表示する
+/*
+** @brief 床色または天井色 1 件を表示する
+** @param label 表示名
+** @param color 出力する RGB 情報
+**
+** color->is_set が true のときは RGB 各成分と packed value を表示し、
+** false のときは未設定として表示する。
+*/
+
+/*
+** @brief 床色と天井色をまとめて表示する
+** @param floor_color 床色 (F)
+** @param ceiling_color 天井色 (C)
+**
+** それぞれを print_rgb() 経由で 1 行ずつ表示する。
+*/
 void	print_colors(const t_rgb *floor_color, const t_rgb *ceiling_color)
 {
 	print_rgb("floor_color", floor_color);
