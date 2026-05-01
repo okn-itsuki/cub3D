@@ -6,12 +6,23 @@
 #include "libft.h"
 #include "parse.h"
 
+typedef struct s_pt
+{
+	int	x;
+	int	y;
+}	t_pt;
+
 static t_excepion	copy_map_lines(char **lines, int start, int end,
 						t_config *config);
 static t_excepion	replace_spawn(char *line, int row, t_config *config);
 static t_excepion	validate_map(const t_config *config);
-static bool			row_is_closed(const t_map *map, int row);
+static bool			**alloc_visited(int height, int width);
+static void			free_visited(bool **vis, int height);
+static t_excepion	flood_fill(const t_config *config);
 static bool			is_valid_map_char(char c);
+
+static const int	g_dx[4] = {0, 0, 1, -1};
+static const int	g_dy[4] = {1, -1, 0, 0};
 
 /**
  * @brief マップ行列を `t_config.map` と `spawn` 情報へ変換します。
@@ -23,7 +34,7 @@ static bool			is_valid_map_char(char c);
  *
  * @retval SUCCESS マップ複製と検証の両方に成功した場合。
  * @retval MAP_ERR マップ欠落、文字不正、プレイヤー不正、閉塞不正時。
- * @retval MALLOC_ERR メモリ確保失敗時。
+ * @retval MALLOC_FAIL メモリ確保失敗時。
  */
 t_excepion	parse_map_lines(char **lines, int start, int end, t_config *config)
 {
@@ -47,7 +58,7 @@ t_excepion	parse_map_lines(char **lines, int start, int end, t_config *config)
  *
  * @retval SUCCESS すべての行の複製に成功した場合。
  * @retval MAP_ERR 行内容不正があった場合。
- * @retval MALLOC_ERR メモリ確保失敗時。
+ * @retval MALLOC_FAIL メモリ確保失敗時。
  */
 static t_excepion	copy_map_lines(char **lines, int start, int end,
 	t_config *config)
@@ -120,6 +131,105 @@ static t_excepion	replace_spawn(char *line, int row, t_config *config)
 }
 
 /**
+ * @brief `height × width` の `bool` 二次元配列をゼロ初期化で確保します。
+ *
+ * @return 確保した配列。失敗時は `NULL`。
+ */
+static bool	**alloc_visited(int height, int width)
+{
+	bool	**vis;
+	int		row;
+
+	vis = ft_calloc(height, sizeof(bool *));
+	if (vis == NULL)
+		return (NULL);
+	row = 0;
+	while (row < height)
+	{
+		vis[row] = ft_calloc(width, sizeof(bool));
+		if (vis[row] == NULL)
+		{
+			while (--row >= 0)
+				free(vis[row]);
+			free(vis);
+			return (NULL);
+		}
+		++row;
+	}
+	return (vis);
+}
+
+/**
+ * @brief `alloc_visited` で確保した配列を解放します。
+ */
+static void	free_visited(bool **vis, int height)
+{
+	int	row;
+
+	row = 0;
+	while (row < height)
+		free(vis[row++]);
+	free(vis);
+}
+
+/**
+ * @brief spawn からの BFS でプレイヤーが範囲外へ出られないか検証します。
+ *
+ * `' '` はソリッド（壁と同等）として通過を禁止します。
+ * 到達可能な `'0'` セルの隣接に範囲外セルがあればエラーとします。
+ * これにより、不規則形状マップで内部に空白が存在しても正しく検証できます。
+ *
+ * @retval SUCCESS プレイヤーが閉じた領域内に留まる場合。
+ * @retval MAP_ERR 範囲外へ到達可能な経路が存在する場合。
+ * @retval MALLOC_FAIL メモリ確保失敗時。
+ */
+static t_excepion	flood_fill(const t_config *config)
+{
+	bool		**vis;
+	t_pt		*queue;
+	int			head;
+	int			tail;
+	t_pt		cur;
+	int			i;
+	int			nx;
+	int			ny;
+
+	vis = alloc_visited(config->map.height, config->map.width);
+	if (vis == NULL)
+		return (malloc_err());
+	queue = malloc(sizeof(t_pt) * config->map.height * config->map.width);
+	if (queue == NULL)
+		return (free_visited(vis, config->map.height), malloc_err());
+	head = 0;
+	tail = 0;
+	vis[config->spawn.row][config->spawn.col] = true;
+	queue[tail++] = (t_pt){config->spawn.col, config->spawn.row};
+	while (head < tail)
+	{
+		cur = queue[head++];
+		i = 0;
+		while (i < 4)
+		{
+			nx = cur.x + g_dx[i];
+			ny = cur.y + g_dy[i];
+			if (nx < 0 || ny < 0 || nx >= config->map.width
+				|| ny >= config->map.height)
+				return (free(queue), free_visited(vis, config->map.height),
+					excepion_map("map must be closed by walls\n"));
+			if (map_cell_at(&config->map, nx, ny) == '0' && !vis[ny][nx])
+			{
+				vis[ny][nx] = true;
+				queue[tail++] = (t_pt){nx, ny};
+			}
+			++i;
+		}
+	}
+	free(queue);
+	free_visited(vis, config->map.height);
+	return (SUCCESS);
+}
+
+/**
  * @brief 複製済みマップのサイズ・プレイヤー・外周閉塞を検証します。
  *
  * @param config 検証対象の設定構造体。
@@ -129,59 +239,11 @@ static t_excepion	replace_spawn(char *line, int row, t_config *config)
  */
 static t_excepion	validate_map(const t_config *config)
 {
-	int		row;
-	int		col;
-	char	cell;
-
 	if (config->map.height < 3 || config->map.width < 3)
 		return (excepion_map("map is too small\n"));
 	if (config->spawn.dir == DIR_UNSET)
 		return (excepion_map("map must contain exactly one player\n"));
-	row = 0;
-	while (row < config->map.height)
-	{
-		if (!row_is_closed(&config->map, row))
-			return (excepion_map("map must be closed by walls\n"));
-		if (row == 0 || row == config->map.height - 1)
-		{
-			col = 0;
-			while (col < config->map.width)
-			{
-				cell = map_cell_at(&config->map, col, row);
-				if (cell != ' ' && cell != '1')
-					return (excepion_map("map must be closed by walls\n"));
-				++col;
-			}
-		}
-		++row;
-	}
-	return (SUCCESS);
-}
-
-/**
- * @brief 指定行の左右端が壁で閉じているか判定します。
- *
- * @retval true 最初と最後の非空白セルがともに `1` の場合。
- * @retval false 行が空、または左右端が壁でない場合。
- */
-static bool	row_is_closed(const t_map *map, int row)
-{
-	int		left;
-	int		right;
-
-	left = 0;
-	while (left < map->width && map_cell_at(map, left, row) == ' ')
-		++left;
-	if (left == map->width)
-		return (false);
-	right = map->width - 1;
-	while (right >= 0 && map_cell_at(map, right, row) == ' ')
-		--right;
-	if (map_cell_at(map, left, row) != '1')
-		return (false);
-	if (map_cell_at(map, right, row) != '1')
-		return (false);
-	return (true);
+	return (flood_fill(config));
 }
 
 /**
