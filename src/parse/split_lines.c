@@ -29,7 +29,7 @@ t_excepion	split_lines(const char *content, char ***lines)
 	line_count = count_lines(content);
 	if (line_count < 0)
 		return (OVFL_ERR);
-	result = malloc(sizeof(char *) * ((size_t)line_count + 1));
+	result = ft_calloc(line_count + 1, sizeof(char *));
 	if (result == NULL)
 		return (malloc_err());
 	if (fill_lines(result, content) != SUCCESS)

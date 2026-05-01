@@ -57,7 +57,7 @@ static t_excepion	copy_map_lines(char **lines, int start, int end,
 	size_t		width;
 
 	config->map.height = end - start;
-	config->map.grid = malloc(sizeof(char *) * (config->map.height + 1));
+	config->map.grid = ft_calloc(config->map.height + 1, sizeof(char *));
 	if (config->map.grid == NULL)
 		return (malloc_err());
 	row = 0;
