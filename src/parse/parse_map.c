@@ -18,11 +18,11 @@ static t_excepion	replace_spawn(char *line, int row, t_config *config);
 static t_excepion	validate_map(const t_config *config);
 static bool			**alloc_visited(int height, int width);
 static void			free_visited(bool **vis, int height);
+static t_excepion	check_nb(t_pt nb, const t_config *cfg, bool **vis,
+						t_pt *q, int *tail);
+static t_excepion	bfs(const t_config *cfg, bool **vis, t_pt *q);
 static t_excepion	flood_fill(const t_config *config);
 static bool			is_valid_map_char(char c);
-
-static const int	g_dx[4] = {0, 0, 1, -1};
-static const int	g_dy[4] = {1, -1, 0, 0};
 
 /**
  * @brief マップ行列を `t_config.map` と `spawn` 情報へ変換します。
@@ -172,12 +172,48 @@ static void	free_visited(bool **vis, int height)
 	free(vis);
 }
 
+static t_excepion	check_nb(t_pt nb, const t_config *cfg, bool **vis,
+	t_pt *q, int *tail)
+{
+	if (nb.x < 0 || nb.y < 0 || nb.x >= cfg->map.width
+		|| nb.y >= cfg->map.height)
+		return (excepion_map("map must be closed by walls\n"));
+	if (map_cell_at(&cfg->map, nb.x, nb.y) == '0' && !vis[nb.y][nb.x])
+	{
+		vis[nb.y][nb.x] = true;
+		q[(*tail)++] = nb;
+	}
+	return (SUCCESS);
+}
+
+static t_excepion	bfs(const t_config *cfg, bool **vis, t_pt *q)
+{
+	t_pt		qt;
+	t_pt		cur;
+	t_excepion	state;
+	int			i;
+
+	qt.x = 0;
+	qt.y = 0;
+	vis[cfg->spawn.row][cfg->spawn.col] = true;
+	q[qt.y++] = (t_pt){cfg->spawn.col, cfg->spawn.row};
+	while (qt.x < qt.y)
+	{
+		cur = q[qt.x++];
+		i = -1;
+		while (++i < 4)
+		{
+			state = check_nb((t_pt){cur.x + (i == 2) - (i == 3),
+					cur.y + (i == 0) - (i == 1)}, cfg, vis, q, &qt.y);
+			if (state != SUCCESS)
+				return (state);
+		}
+	}
+	return (SUCCESS);
+}
+
 /**
  * @brief spawn からの BFS でプレイヤーが範囲外へ出られないか検証します。
- *
- * `' '` はソリッド（壁と同等）として通過を禁止します。
- * 到達可能な `'0'` セルの隣接に範囲外セルがあればエラーとします。
- * これにより、不規則形状マップで内部に空白が存在しても正しく検証できます。
  *
  * @retval SUCCESS プレイヤーが閉じた領域内に留まる場合。
  * @retval MAP_ERR 範囲外へ到達可能な経路が存在する場合。
@@ -187,46 +223,18 @@ static t_excepion	flood_fill(const t_config *config)
 {
 	bool		**vis;
 	t_pt		*queue;
-	int			head;
-	int			tail;
-	t_pt		cur;
-	int			i;
-	int			nx;
-	int			ny;
+	t_excepion	state;
 
 	vis = alloc_visited(config->map.height, config->map.width);
 	if (vis == NULL)
 		return (malloc_err());
-	queue = malloc(sizeof(t_pt) * config->map.height * config->map.width);
+	queue = ft_calloc(config->map.height * config->map.width, sizeof(t_pt));
 	if (queue == NULL)
 		return (free_visited(vis, config->map.height), malloc_err());
-	head = 0;
-	tail = 0;
-	vis[config->spawn.row][config->spawn.col] = true;
-	queue[tail++] = (t_pt){config->spawn.col, config->spawn.row};
-	while (head < tail)
-	{
-		cur = queue[head++];
-		i = 0;
-		while (i < 4)
-		{
-			nx = cur.x + g_dx[i];
-			ny = cur.y + g_dy[i];
-			if (nx < 0 || ny < 0 || nx >= config->map.width
-				|| ny >= config->map.height)
-				return (free(queue), free_visited(vis, config->map.height),
-					excepion_map("map must be closed by walls\n"));
-			if (map_cell_at(&config->map, nx, ny) == '0' && !vis[ny][nx])
-			{
-				vis[ny][nx] = true;
-				queue[tail++] = (t_pt){nx, ny};
-			}
-			++i;
-		}
-	}
+	state = bfs(config, vis, queue);
 	free(queue);
 	free_visited(vis, config->map.height);
-	return (SUCCESS);
+	return (state);
 }
 
 /**
