@@ -70,17 +70,25 @@ static t_excepion	set_texture_path(const char *line, int tex_id, t_config *confi
 {
 	char		*path;
 	t_excepion	state;
+	int			fd;
 
 	path = NULL;
 	state = dup_texture_path(&path, parse_skip_spaces(line + TEX_ID_LEN));
 	if (state != SUCCESS)
 		return (state);
 	state = is_valid_texture_path(path);
-	if (state != SUCCESS) 
+	if (state != SUCCESS)
 	{
 		free(path);
 		return (state);
 	}
+	state = open_file(path, &fd);
+	if (state != SUCCESS)
+	{
+		free(path);
+		return (state);
+	}
+	close_file(fd);
 	config->tex.path[tex_id] = path;
 	return (SUCCESS);
 }
