@@ -12,7 +12,7 @@ mkdir -p "$LOG_DIR" || exit 1
 first=true
 
 find "$MAP_DIR" -type f -name '*.cub' | sort | while IFS= read -r map_file; do
-	output=$("$EXEC_FILE" "$map_file" 2>&1)
+	output=$(cd "$ROOT_DIR" && "$EXEC_FILE" "$map_file" 2>&1)
 	status=$?
 
 	if [ "$first" = true ]; then
