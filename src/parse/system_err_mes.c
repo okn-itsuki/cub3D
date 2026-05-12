@@ -75,6 +75,7 @@ t_excepion excepion_color(const char *message)
 
 t_excepion excepion_message(const char *message, t_excepion state)
 {
+	ft_putstr_fd("[ERROR] ", STDERR_FILENO);
 	ft_putstr_fd((char *)message, STDERR_FILENO);
 	return (state);
 }
