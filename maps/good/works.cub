@@ -1,13 +1,13 @@
-   WE                            texture/direction/west.xpm
-NO      texture/direction/north.xpm
+   WE                            ../../texture/direction/west.xpm
+NO      ../../texture/direction/north.xpm
 
 
 
-SO texture/direction/south.xpm
+SO ../../texture/direction/south.xpm
 
 F      17,    38,     64
 
-EA texture/direction/east.xpm
+EA ../../texture/direction/east.xpm
 
 
 

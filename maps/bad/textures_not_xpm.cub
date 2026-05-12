@@ -1,7 +1,7 @@
-NO textures/test/north
-SO texture/direction/south.xpm
-WE texture/direction/west.xpm
-EA texture/direction/east.xpm
+NO ../../textures/test/north
+SO ../../texture/direction/south.xpm
+WE ../../texture/direction/west.xpm
+EA ../../texture/direction/east.xpm
 
 F 20,20,20
 C 200,200,200
