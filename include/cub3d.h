@@ -13,6 +13,7 @@
 
 #include "cub_config.h"
 #include "mlx.h"
+#include "parse.h"
 
 #define WIN_W 800	/**< ウィンドウ幅 [pixel] */
 #define WIN_H 600	/**< ウィンドウ高さ [pixel] */
