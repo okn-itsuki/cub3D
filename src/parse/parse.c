@@ -67,19 +67,11 @@ static t_excepion	fill_config_from_lines(char **lines, t_config *config)
 			break ;
 		else if (type == LINE_TEXTURE || type == LINE_COLOR)
 		{
-			/* ヘッダ 1 行を識別子ごとに解釈する処理。
-			 * 必要機能: 要素種別の判定、書式検証、重複検出、
-			 * 設定値の保存をまとめて行うこと。
-			 */
 			state = parse_header_line(lines[index], config);
 			if (state != SUCCESS)
 				return (state);
 			index++;
 		}
-		/* 必須ヘッダが出そろったかを判定する処理。
-		 * 必要機能: マップ開始判定の前提として、
-		 * 必須 6 要素の充足状態を一貫して返すこと。
-		 */
 		else if (parse_all_headers_set(config) == SUCCESS && type == LINE_MAP)
 			map_start = index;
 		else
@@ -89,16 +81,8 @@ static t_excepion	fill_config_from_lines(char **lines, t_config *config)
 		map_start = index;
 	while (lines[index] != NULL && !parse_is_blank_line(lines[index]))
 		index++;
-	/* 必須ヘッダの最終充足を検証する処理。
-	 * 必要機能: マップ解析に進む前に、
-	 * 未設定要素の有無を確実に検出すること。
-	 */
 	if (parse_all_headers_set(config) != SUCCESS)
 		return (excepion_message("required identifiers are missing", Draft));
-	/* マップ領域を構築し妥当性検証まで完了する処理。
-	 * 必要機能: 行の保持、スポーン抽出、文字検証、
-	 * 閉塞判定を行い、成功時だけ設定へ反映すること。
-	 */
 	state = parse_map_lines(lines, map_start, index, config);
 	if (state != SUCCESS)
 		return (state);
