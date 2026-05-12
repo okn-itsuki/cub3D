@@ -22,7 +22,9 @@ int	main(int argc, char **argv)
 	if (argc != 2)
 	{
 		fprintf(stderr, "Usage: %s <map.cub>\n", argv[0]);
-		return (1);
+// TODO : iokuno
+// t_excepion に INVALID_ARG_COUNT を追加する。
+		return (INVALID_ARG_COUNT);
 	}
 	state = parse_cub(argv[1], &config);
 	if (state != SUCCESS)
