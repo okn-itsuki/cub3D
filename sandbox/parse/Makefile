@@ -46,7 +46,7 @@ LDFLAGS += -L$(LIBFT_DIR)
 LDLIBS += -lft
 endif
 
-MAP ?= ../../maps/good/test_map.cub
+MAP ?= maps/good/test_map.cub
 
 all: $(NAME)
 
@@ -67,7 +67,7 @@ $(LIBFT):
 endif
 
 run: $(NAME)
-	./$(NAME) $(MAP)
+	cd $(ROOT_DIR) && ./sandbox/parse/$(NAME) $(MAP)
 
 clean:
 	$(RMDIR) $(OBJ_DIR)

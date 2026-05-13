@@ -6,7 +6,7 @@
 
 
 
-NO ../../texture/direction/north.xpm
+NO texture/direction/north.xpm
 
 
 
@@ -15,9 +15,9 @@ NO ../../texture/direction/north.xpm
 
 
 
-SO ../../texture/direction/south.xpm
-                        WE ../../texture/direction/west.xpm
-        EA ../../texture/direction/east.xpm            
+SO texture/direction/south.xpm
+                        WE texture/direction/west.xpm
+        EA texture/direction/east.xpm            
 
         F 20,           20,             20
 C 200,          200,200
