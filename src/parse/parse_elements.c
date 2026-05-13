@@ -43,14 +43,13 @@ t_excepion parse_all_headers_set(const t_config *config)
 	index = 0;
 	while (index < TEX_COUNT)
 	{
-// TODO : issue33
 		if (config->tex.path[index] == NULL)
-			return (excepion_texture("Required texture images are missing.\n"));
+			return (excepion_message("Required texture images are missing.\n", TEX_ERR));
 		index++;
 	}
 	if (!config->floor_color.is_set )
-		return (excepion_texture("Floor color has not been specified."));
+		return (excepion_message("Floor color has not been specified.", TEX_ERR));
 	if (!config->ceiling_color.is_set)
-		return (excepion_texture("Ceiling color has not been specified."));
+		return (excepion_message("Ceiling color has not been specified.", TEX_ERR));
 	return (SUCCESS);
 }

@@ -1,10 +1,10 @@
 F 76,76,76
 C 99,99,99
 
-NO texture/direction/north.xpm
-SO texture/direction/south.xpm
-WE texture/direction/west.xpm
-EA texture/direction/east.xpm
+NO ../../texture/direction/north.xpm
+SO ../../texture/direction/south.xpm
+WE ../../texture/direction/west.xpm
+EA ../../texture/direction/east.xpm
 
 1111111111111111111
 10W1001001001000001
