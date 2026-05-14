@@ -1,0 +1,21 @@
+#ifndef PARSE_EXCEPION_H
+#define PARSE_EXCEPION_H
+
+typedef enum s_excepion
+{
+	SUCCESS,
+	ARG_NULL = 50,
+	EXTENSION_ERR,
+	CLOSE_ERR,
+	OVFL_ERR,
+	OPEN_ERR,
+	READ_ERR,
+	MALLOC_FAIL,
+	INVALID_STRING,
+	COLOR_ERR,
+	TEX_ERR,
+	MAP_ERR,
+	Draft
+} t_excepion;
+
+#endif

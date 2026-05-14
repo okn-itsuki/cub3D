@@ -16,8 +16,10 @@ PARSE_SRC := \
 	$(PARSE_SRC_DIR)/map_access.c \
 	$(PARSE_SRC_DIR)/parse/init_config.c \
 	$(PARSE_SRC_DIR)/parse/parse.c \
+	$(PARSE_SRC_DIR)/parse/parse_color.c \
 	$(PARSE_SRC_DIR)/parse/parse_elements.c \
 	$(PARSE_SRC_DIR)/parse/parse_map.c \
+	$(PARSE_SRC_DIR)/parse/parse_texture.c \
 	$(PARSE_SRC_DIR)/parse/parse_utils.c \
 	$(PARSE_SRC_DIR)/parse/read_file.c \
 	$(PARSE_SRC_DIR)/parse/split_lines.c \
@@ -44,7 +46,7 @@ LDFLAGS += -L$(LIBFT_DIR)
 LDLIBS += -lft
 endif
 
-MAP ?= ../../maps/good/test_map.cub
+MAP ?= maps/good/test_map.cub
 
 all: $(NAME)
 
@@ -65,7 +67,7 @@ $(LIBFT):
 endif
 
 run: $(NAME)
-	./$(NAME) $(MAP)
+	cd $(ROOT_DIR) && ./sandbox/parse/$(NAME) $(MAP)
 
 clean:
 	$(RMDIR) $(OBJ_DIR)
