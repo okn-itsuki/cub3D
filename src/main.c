@@ -53,7 +53,7 @@ bool game_render(t_game *game)
 
 bool cub3d(t_game *game)
 {
-	if(game_render(game) == false);
+	if(game_render(game) == false)
 		return false; 
 
 
@@ -81,12 +81,14 @@ int	main(int argc, char **argv)
 		fprintf(stderr, "Usage: %s <map.cub>\n", argv[0]);
 // TODO : iokuno
 // t_excepion に INVALID_ARG_COUNT を追加する。
-		return (INVALID_ARG_COUNT);
+		// return (INVALID_ARG_COUNT);
 	}
 	init_game(&game); 
 	state = parse_cub(argv[1], &game.config);
 	if (state != SUCCESS)
-	if(cub3d(&game) == false);
+		return 1;
+	if(cub3d(&game) == false)
+		return 1;
 //TODO : render()
 	return (state);
 }
