@@ -175,10 +175,15 @@ static void	free_visited(bool **vis, int height)
 static t_excepion	check_nb(t_pt nb, const t_config *cfg, bool **vis,
 	t_pt *q, int *tail)
 {
+	char	cell;
+
 	if (nb.x < 0 || nb.y < 0 || nb.x >= cfg->map.width
 		|| nb.y >= cfg->map.height)
-		return (excepion_map("map must be closed by walls\n"));
-	if (map_cell_at(&cfg->map, nb.x, nb.y) == '0' && !vis[nb.y][nb.x])
+		return (excepion_message("map must be closed by walls\n", MAP_ERR));
+	cell = map_cell_at(&cfg->map, nb.x, nb.y);
+	if (cell == ' ')
+		return (excepion_message("map must be closed by walls\n", MAP_ERR));
+	if (cell == '0' && !vis[nb.y][nb.x])
 	{
 		vis[nb.y][nb.x] = true;
 		q[(*tail)++] = nb;
